@@ -1,18 +1,16 @@
 use yew::prelude::*;
-// use wasm_logger;
 
-mod chatbox;
-mod conversation;
+pub struct Conversation {
+    link: ComponentLink<Self>,
+}
 
-struct AppPrust {}
-
-impl Component for AppPrust {
+impl Component for Conversation {
     type Message = ();
     type Properties = ();
 
     // https://doc.rust-lang.org/rust-by-example/trait.html
-    fn create(_: Self::Properties, _: ComponentLink<Self>) -> Self {
-        Self {}
+    fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
+        Self { link }
     }
 
     fn update(&mut self, _: Self::Message) -> ShouldRender {
@@ -29,19 +27,8 @@ impl Component for AppPrust {
     fn view(&self) -> Html {
         html! {
             <>
-                <conversation::Conversation></conversation::Conversation>
-                <chatbox::ChatBox></chatbox::ChatBox>
+                <section class="conversation">{"THE CONTENT"}</section>
             </>
         }
     }
-}
-
-fn main() {
-    // wasm_logger::init(wasm_logger::Config::default());
-
-    // Logging
-    // log::info!("Starting");
-    yew::initialize();
-    App::<AppPrust>::new().mount_to_body();
-    // log::info!("Started");
 }
