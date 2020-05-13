@@ -5,8 +5,10 @@ authors = ["ImFlog <garcia.florian.perso@gmail.com>", "NugetChar <nugetchar@gmai
 edition = "2018"
 
 [dependencies]
+log = "0.4"
+wasm-logger = "0.2"
+wasm-bindgen = "0.2.62"
+serde = "1.0"
+serde_derive = "1.0"
 yew = "0.15"
 web-sys = "0.3.39"
-# yew = {version = "0.15", features=["console"]}
-
-# stdweb = "0.4.20"

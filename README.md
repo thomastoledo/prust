@@ -72,3 +72,23 @@ RAS
     * Derniere maj il y a 30min
 
 * Plus possible de lancer le projet dans l'etat actuel
+
+# Stream 3
+## Intersteam :cow:
+* Explication rework vers web-sys
+    * Installation de wasm pack : `cargo install wasm-bindgen-cli`
+    * Remove de cargo-web `cargo uninstall cargo-web` :pray:
+    * Change the Cargo.toml to use websys + wasm-bindgen
+    * `cargo build --target wasm32-unknown-unknown`
+    * `wasm-bindgen --target web --no-typescript --out-dir static/ --out-name app target/wasm32-unknown-unknown/debug/prust.wasm`
+    * cd static && python3 -m http.server
+* Console Logging / Debugging
+
+## Plan
+* Rework textarea via reference
+* Communication entre composants => envoyer le contenu du textarea dans le composant de conversation
+* * Utilisation d'un systeme d'acteurs ?
+
+## Realisation
+
+## Problemes

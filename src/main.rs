@@ -1,5 +1,4 @@
 use yew::prelude::*;
-// use wasm_logger;
 
 mod chatbox;
 mod conversation;
@@ -37,11 +36,6 @@ impl Component for AppPrust {
 }
 
 fn main() {
-    // wasm_logger::init(wasm_logger::Config::default());
-
-    // Logging
-    // log::info!("Starting");
-    yew::initialize();
-    App::<AppPrust>::new().mount_to_body();
-    // log::info!("Started");
+    wasm_logger::init(wasm_logger::Config::default());
+    yew::start_app::<AppPrust>();
 }
