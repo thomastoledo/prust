@@ -76,10 +76,10 @@ RAS
 # Stream 3
 ## Intersteam :cow:
 * Explication rework vers web-sys
-    * Installation de wasm pack : `cargo install wasm-bindgen-cli`
+    * Installation de wasm bindgen : `cargo install wasm-bindgen-cli`
     * Remove de cargo-web `cargo uninstall cargo-web` :pray:
     * Change the Cargo.toml to use websys + wasm-bindgen
-    * `cargo build --target wasm32-unknown-unknown`
+    * `cargo build --features "console_error_panic_hook" --target wasm32-unknown-unknown`
     * `wasm-bindgen --target web --no-typescript --out-dir static/ --out-name app target/wasm32-unknown-unknown/debug/prust.wasm`
     * cd static && python3 -m http.server
 * Console Logging / Debugging
@@ -87,8 +87,24 @@ RAS
 ## Plan
 * Rework textarea via reference
 * Communication entre composants => envoyer le contenu du textarea dans le composant de conversation
-* * Utilisation d'un systeme d'acteurs ?
+    * Utilisation d'un systeme d'acteurs ?
 
 ## Realisation
+* Tooling
+    * (Cargo watch)[https://github.com/passcod/cargo-watch] => Now !
+    * (Cargo makefile)[https://github.com/sagiegurari/cargo-make] => Soon ?
+    * Notre commande watch `cargo watch -x 'build --features "console_error_panic_hook" --target wasm32-unknown-unknown' -s 'wasm-bindgen --target web --no-typescript --out-dir static/ --out-name app target/wasm32-unknown-unknown/debug/prust.wasm'`
+
+* Communication entre composants => envoyer le contenu du textarea dans le composant de conversation
+    * https://yew.rs/docs/concepts/components/callbacks#callbacks => Now !
+    * https://yew.rs/docs/concepts/agents => Soon ?
 
 ## Problemes
+* Gestion des callbacks parent / enfant
+    * Regarder plus en détail ce qu'est un Callback en RUST
+    * Piste : (Elm}[https://elm-lang.org/] (Yew est apparemment inspiré de Elm)
+    * (Test in doc)[https://doc.rust-lang.org/rustdoc/documentation-tests.html]
+
+# Stream 4
+## Plan
+* Callback enfant1 => parent => enfant2

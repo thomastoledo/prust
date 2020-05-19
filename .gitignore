@@ -13,3 +13,6 @@ Cargo.lock
 #Added by cargo
 
 /target
+static/*
+!static/index.html
+!static/chat.css

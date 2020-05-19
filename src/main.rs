@@ -3,14 +3,28 @@ use yew::prelude::*;
 mod chatbox;
 mod conversation;
 
-struct AppPrust {}
+struct Callbacks {
+    on_msg: Callback<String>
+}
+
+struct AppPrust {
+    // callbacks: Callbacks,
+}
+
+enum TestMessage { 
+    OnReceive
+}
 
 impl Component for AppPrust {
-    type Message = ();
+    type Message = TestMessage;
     type Properties = ();
 
     // https://doc.rust-lang.org/rust-by-example/trait.html
-    fn create(_: Self::Properties, _: ComponentLink<Self>) -> Self {
+    fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
+        // let callbacks: Callbacks = {
+        //     on_msg: link.send_message(msg: T)(|value: String| log::info!("{}", value))
+        // };
+        // Self {callbacks}
         Self {}
     }
 
@@ -29,11 +43,13 @@ impl Component for AppPrust {
         html! {
             <>
                 <conversation::Conversation></conversation::Conversation>
-                <chatbox::ChatBox></chatbox::ChatBox>
+                // <chatbox::ChatBox on_send=|_| TestMessage::OnReceive ></chatbox::ChatBox>
             </>
         }
     }
 }
+
+// |value: String| log::error!("{}", value)
 
 fn main() {
     wasm_logger::init(wasm_logger::Config::default());

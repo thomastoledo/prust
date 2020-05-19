@@ -1,16 +1,16 @@
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
+use yew::Callback;
 
 pub struct ChatBox {
     link: ComponentLink<Self>,
     node_ref: NodeRef,
-    // props: ChatBoxProps,
 }
 
-// #[derive(Properties, Clone)]
-// pub struct ChatBoxProps {
-//     pub on_send: Callback<String>,
-// }
+#[derive(Properties, Clone)]
+pub struct ChatBoxProps {
+    pub on_send: Callback<()>,
+}
 
 pub enum Msg {
     SendMessage,
@@ -18,7 +18,7 @@ pub enum Msg {
 
 impl Component for ChatBox {
     type Message = Msg;
-    type Properties = ();
+    type Properties = ChatBoxProps;
 
     // https://doc.rust-lang.org/rust-by-example/trait.html
     fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
@@ -27,10 +27,9 @@ impl Component for ChatBox {
     }
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
-        log::info!("Hello ? before ?");
         match msg {
             Msg::SendMessage => match self.node_ref.cast::<HtmlInputElement>() {
-                Some(input) => log::info!("Text = {:?}", input.value()),
+                Some(input) => panic!("Text = {:?}", input.value()),
                 None => log::error!("No value !"),
             }
         };
@@ -49,7 +48,7 @@ impl Component for ChatBox {
             <>
                 <form class="chatbox__form">
                     <textarea ref=self.node_ref.clone() placeholder="Type something..."></textarea>
-                    <input type="button" onclick=self.link.callback(|_| Msg::SendMessage)> {"Send"} </input>
+                    <input type="button" onclick=self.link.callback(|_| Msg::SendMessage) value="Send"/>
                 </form>
             </>
         }
