@@ -106,5 +106,32 @@ RAS
     * (Test in doc)[https://doc.rust-lang.org/rustdoc/documentation-tests.html]
 
 # Stream 4
+## Plan / Realisation
+* Callback enfant1 => parent
+    * example: https://github.com/yewstack/yew/tree/master/examples/node_refs
+    * Utilisation de callback et de emit() pour passer les informations entre les composants
+* Callback parent => enfant2
+    * Utilisation des props pour trigger la méthode `change` du composant enfant
+    * [change](https://yew.rs/docs/concepts/components#change)
+* [Html list display](https://yew.rs/docs/concepts/html/lists)
+
+* Rust
+    * [LinkedList](https://doc.rust-lang.org/std/collections/struct.LinkedList.html)
+    * Vectors [doc](https://doc.rust-lang.org/std/vec/struct.Vec.html) [rustbook](https://doc.rust-lang.org/book/ch08-01-vectors.html)
+
+## Problemes
+RAS
+
+# Stream 5
 ## Plan
-* Callback enfant1 => parent => enfant2
+* If let cleanup
+* Nettoyer Input text on send
+* CTRL + ENTER pour envoyer un message (ENTER ne fait pas d'erreurs console)
+* Formatting des messages via HTML dans conversation.rs
+    * Structure custom pour afficher le sender (moi / autre)
+    * Historisation ? Page de list de message par ex.
+
+# Stream X ?
+## Plan
+* Tests
+* CI github action ?

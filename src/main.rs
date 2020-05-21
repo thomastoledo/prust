@@ -3,16 +3,13 @@ use yew::prelude::*;
 mod chatbox;
 mod conversation;
 
-struct Callbacks {
-    on_msg: Callback<String>
-}
-
 struct AppPrust {
-    // callbacks: Callbacks,
+    link: ComponentLink<Self>, 
+    chat_messages: Vec<String>,
 }
 
 enum TestMessage { 
-    OnReceive
+    OnReceive(String),
 }
 
 impl Component for AppPrust {
@@ -21,29 +18,28 @@ impl Component for AppPrust {
 
     // https://doc.rust-lang.org/rust-by-example/trait.html
     fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
-        // let callbacks: Callbacks = {
-        //     on_msg: link.send_message(msg: T)(|value: String| log::info!("{}", value))
-        // };
-        // Self {callbacks}
-        Self {}
+        Self {link, chat_messages: vec![String::from("Good morning Vietnam !")]}
     }
 
-    fn update(&mut self, _: Self::Message) -> ShouldRender {
+    fn update(&mut self, msg: Self::Message) -> ShouldRender {
+        match msg {
+            TestMessage::OnReceive(value) => self.chat_messages.push(value),
+        };
         true
     }
 
-    fn change(&mut self, _props: Self::Properties) -> ShouldRender {
+    fn change(&mut self, props: Self::Properties) -> ShouldRender {
         // Should only return "true" if new properties are different to
         // previously received properties.
-        // This component has no properties so we will always return "false".
         false
     }
 
     fn view(&self) -> Html {
         html! {
             <>
-                <conversation::Conversation></conversation::Conversation>
-                // <chatbox::ChatBox on_send=|_| TestMessage::OnReceive ></chatbox::ChatBox>
+                <conversation::Conversation chat_messages=&self.chat_messages></conversation::Conversation>
+                <chatbox::ChatBox on_send=self.link.callback(|message: String| TestMessage::OnReceive(message))>
+                </chatbox::ChatBox>
             </>
         }
     }

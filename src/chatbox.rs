@@ -5,11 +5,12 @@ use yew::Callback;
 pub struct ChatBox {
     link: ComponentLink<Self>,
     node_ref: NodeRef,
+    props: ChatBoxProps,
 }
 
 #[derive(Properties, Clone)]
 pub struct ChatBoxProps {
-    pub on_send: Callback<()>,
+    pub on_send: Callback<String>,
 }
 
 pub enum Msg {
@@ -20,16 +21,14 @@ impl Component for ChatBox {
     type Message = Msg;
     type Properties = ChatBoxProps;
 
-    // https://doc.rust-lang.org/rust-by-example/trait.html
-    fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
-        // Self { link, node_ref: NodeRef::default(), props }
-        Self { link, node_ref: NodeRef::default()}
+    fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
+        Self { link, node_ref: NodeRef::default(), props}
     }
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
             Msg::SendMessage => match self.node_ref.cast::<HtmlInputElement>() {
-                Some(input) => panic!("Text = {:?}", input.value()),
+                Some(input) => self.props.on_send.emit(input.value()),
                 None => log::error!("No value !"),
             }
         };
