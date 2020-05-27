@@ -36,11 +36,11 @@ impl Component for AppPrust {
 
     fn view(&self) -> Html {
         html! {
-            <>
+            <section class="app">
                 <conversation::Conversation chat_messages=&self.chat_messages></conversation::Conversation>
                 <chatbox::ChatBox on_send=self.link.callback(|message: String| TestMessage::OnReceive(message))>
                 </chatbox::ChatBox>
-            </>
+            </section>
         }
     }
 }
