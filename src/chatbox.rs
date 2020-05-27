@@ -1,4 +1,5 @@
 use web_sys::HtmlInputElement;
+use web_sys::Event;
 use yew::prelude::*;
 use yew::Callback;
 
@@ -44,10 +45,10 @@ impl Component for ChatBox {
 
     fn view(&self) -> Html {
         html! {
-            <>
+            <>  
                 <form class="chatbox__form">
                     <textarea ref=self.node_ref.clone() placeholder="Type something..."></textarea>
-                    <input type="button" onclick=self.link.callback(|_| Msg::SendMessage) value="Send"/>
+                    <input type="button" onclick=self.link.callback(|_| Msg::SendMessage) class="material-icons" value="flight_takeoff"/>
                 </form>
             </>
         }

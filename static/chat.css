@@ -1,13 +1,15 @@
 @import "variables.css";
 
 html, body {
-    background-color: var(--base-color);
     margin: 0;
     padding: 0;
     min-height: 100vh;
 }
 
 body {
+    background-image: url(pizza_cat.jpg);
+    background-size: cover;
+    background-attachment: fixed;
     font-size: 16px;
 }
 
@@ -32,6 +34,9 @@ body {
     border-radius: 4px;
     margin-bottom: var(--margin-bottom-conversation-container);
     padding: var(--padding-conversation-container);
+    position: relative;
+    display: flex;
+    flex-direction: column;
 }
 
 .chatbox__form {
@@ -44,14 +49,43 @@ body {
     height: 100%;
     border-top-right-radius: 4px;
     border-bottom-right-radius: 4px;
+    border: 1px solid var(--black);
 }
 
 .chatbox__form > textarea {
     flex-grow: 1;
     border-top-left-radius: 4px;
     border-bottom-left-radius: 4px;
+    resize: none;
 }
-/* 
 
-*/
-/*  */
+/* CLASSES FOR MESSAGES */
+
+/* FROM ME */
+.message--me {
+    border-radius: 24px;
+    background-color: #d1ffce;
+    padding: 16px;
+    width: max-content;
+    font-size: 16px;
+    position: relative;
+    align-self: flex-end;
+    margin: 0;
+    overflow-wrap: break-word;
+    max-width: 50%;
+    margin: 4px 0;
+}
+
+/* FROM U <3 */
+.message--u {
+    border-radius: 24px;
+    background-color: var(--light-blue);
+    padding: 16px;
+    width: max-content;
+    overflow-wrap: break-word;
+    font-size: 16px;
+    position: relative;
+    left: 0%;
+    max-width: 50%;
+    margin: 4px 0;
+}

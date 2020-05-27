@@ -34,7 +34,7 @@ impl Component for Conversation {
     fn view(&self) -> Html {
         html! {
             <>
-                <section class="conversation">
+                <section class="conversation-container">
                     { self.props.chat_messages.iter().map(|message| format!("<p>{}</p>", message)).collect::<Html>() }
                 </section>
             </>
