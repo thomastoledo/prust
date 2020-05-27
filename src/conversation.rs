@@ -2,6 +2,7 @@ use yew::prelude::*;
 
 pub struct Conversation {
     props: ConversationProps,
+    children: Children,
 }
 
 #[derive(Properties, Clone, PartialEq)]
@@ -15,7 +16,7 @@ impl Component for Conversation {
 
     // https://doc.rust-lang.org/rust-by-example/trait.html
     fn create(props: Self::Properties, _: ComponentLink<Self>) -> Self {
-        Self { props }
+        Self { props , children : Children::default()}
     }
 
     fn update(&mut self, _: Self::Message) -> ShouldRender {

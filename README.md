@@ -125,13 +125,21 @@ RAS
 # Stream 5
 ## Plan
 * If let cleanup
-* Nettoyer Input text on send
+* Nettoyer Input text on send => set_value sur node_ref.
 * CTRL + ENTER pour envoyer un message (ENTER ne fait pas d'erreurs console)
 * Formatting des messages via HTML dans conversation.rs
     * Structure custom pour afficher le sender (moi / autre)
     * Historisation ? Page de list de message par ex.
 
-# Stream X ?
-## Plan
-* Tests
-* CI github action ?
+## Realisation
+* Yew
+    * [KeyboardEvent](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.KeyboardEvent.html)
+    * [Children & ChildrenRenderer](https://yew.rs/docs/concepts/html/components)
+
+* Rust
+    * [If let](https://doc.rust-lang.org/stable/rust-by-example/flow_control/if_let.html)
+    * Pour voir la doc de notre projet et ses dépendances : `cargo doc --open`
+    * [Display trait](https://doc.rust-lang.org/std/fmt/trait.Display.html)
+
+## Problèmes
+* Formating des messages via HTML

@@ -1,0 +1,36 @@
+:root {
+    /* COLORS */
+    --base-color: #442F8B;
+    --purple-light: #6E5EA6;
+    --purple-white: #B4A0F5;
+    --white: #FFFFFF;
+    --black: #000000;
+    --light-blue: #cef1ff;
+
+    /* BORDERS */
+    --border-width: 1px;
+    --border-conversation-container: var(--border-width) solid var(--purple-light);
+
+    /* WIDTHS */
+    --max-width: 900px;
+
+    /* HEIGHTS */
+    --height-app: calc(100vh - var(--padding-app) * 2);
+    --height-chatbox: 100px;
+    --height-conversation-container: calc(var(--height-app) - var(--height-chatbox) - (var(--border-width) * 2) - var(--margin-bottom-conversation-container) - (var(--padding-conversation-container) * 2));
+
+    /* BACKGROUNDS */
+    --background-conversation-container: var(--white);
+
+    /* GAPS */
+    --gap-base: 8px;
+    --gap-2X: calc(var(--gap-base) * 2);
+
+    /* MARGINS */
+    --margin-bottom-conversation-container: var(--gap-base);
+    --margin-top-app: var(--gap-base);
+
+    /* PADDINGS */
+    --padding-conversation-container: var(--gap-2X);
+    --padding-app: var(--gap-base);
+}

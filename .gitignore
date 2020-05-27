@@ -16,3 +16,5 @@ Cargo.lock
 static/*
 !static/index.html
 !static/chat.css
+!static/variables.css
+!static/pizza_cat.jpg
