@@ -143,3 +143,18 @@ RAS
 
 ## Problèmes
 * Formating des messages via HTML
+
+# Stream 6
+## Intersteam :cow:
+* Split main / lib
+
+## Plan
+* Formatting messages HTML en fonction de la provenance
+* Mock envoit message reseau
+* Un peu de borrowing
+* Discussion autour du P2P et next steps
+
+# Stream X ?
+## Plan
+* Tests
+* CI github action ?
