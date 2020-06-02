@@ -154,6 +154,20 @@ RAS
 * Un peu de borrowing
 * Discussion autour du P2P et next steps
 
+## Réalisation
+* Code cleaning
+* Utiliser une implémentation sans le trait Component pour ChatMessage
+* Gérer les lifetimes https://doc.rust-lang.org/1.9.0/book/lifetimes.html
+
+# Stream 7
+## Interstream :cow:
+* Garder les sauts de ligne
+
+## Plan
+* Le Hole Punching (https://en.wikipedia.org/wiki/Hole_punching_%28networking%29)
+* Utilisation d'un serveur de rendez-vous https://libp2p.io/
+    * https://docs.libp2p.io/concepts/transport/
+
 # Stream X ?
 ## Plan
 * Tests
