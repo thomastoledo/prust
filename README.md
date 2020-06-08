@@ -167,6 +167,15 @@ RAS
 * Le Hole Punching (https://en.wikipedia.org/wiki/Hole_punching_%28networking%29)
 * Utilisation d'un serveur de rendez-vous https://libp2p.io/
     * https://docs.libp2p.io/concepts/transport/
+* Ressources : 
+    * [ICE](https://developer.mozilla.org/en-US/docs/Glossary/ICE)
+    * [Signaling Server](https://developer.mozilla.org/en-US/docs/Web/API/WebRTC_API/Signaling_and_video_calling)
+    * [SDP](https://developer.mozilla.org/en-US/docs/Glossary/SDP)
+    * [Introduction to WebRTC Protocol](https://developer.mozilla.org/en-US/docs/Web/API/WebRTC_API/Protocols)
+    * [https://github.com/simmons/webrtc-sctp](https://github.com/simmons/webrtc-sctp)
+    * [https://github.com/rasviitanen/rustysignal](https://github.com/rasviitanen/rustysignal)
+    * [Yew Chat WebRTC](https://github.com/codec-abc/Yew-WebRTC-Chat)
+
 
 # Stream X ?
 ## Plan
