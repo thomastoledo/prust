@@ -153,6 +153,8 @@ RAS
 * Mock envoit message reseau
 * Un peu de borrowing
 * Discussion autour du P2P et next steps
+    * [Le Hole Punching](https://en.wikipedia.org/wiki/Hole_punching_%28networking%29)
+    * [libp2p](https://docs.libp2p.io/concepts/transport/)
 
 ## Réalisation
 * Code cleaning
@@ -160,22 +162,28 @@ RAS
 * Gérer les lifetimes https://doc.rust-lang.org/1.9.0/book/lifetimes.html
 
 # Stream 7
-## Interstream :cow:
-* Garder les sauts de ligne
-
 ## Plan
-* Le Hole Punching (https://en.wikipedia.org/wiki/Hole_punching_%28networking%29)
-* Utilisation d'un serveur de rendez-vous https://libp2p.io/
-    * https://docs.libp2p.io/concepts/transport/
-* Ressources : 
+* P2P code
+
+## Réalisation
+* Récap WebRTC
     * [ICE](https://developer.mozilla.org/en-US/docs/Glossary/ICE)
     * [Signaling Server](https://developer.mozilla.org/en-US/docs/Web/API/WebRTC_API/Signaling_and_video_calling)
     * [SDP](https://developer.mozilla.org/en-US/docs/Glossary/SDP)
     * [Introduction to WebRTC Protocol](https://developer.mozilla.org/en-US/docs/Web/API/WebRTC_API/Protocols)
     * [https://github.com/simmons/webrtc-sctp](https://github.com/simmons/webrtc-sctp)
     * [https://github.com/rasviitanen/rustysignal](https://github.com/rasviitanen/rustysignal)
-    * [Yew Chat WebRTC](https://github.com/codec-abc/Yew-WebRTC-Chat)
+* Création d'une RtcPeerConnection
+    * [RtcPeerConnection](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.RtcPeerConnection.html)
+    * [RtcConfiguration](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.RtcConfiguration.html)
+    * [RtcIceServer](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.RtcIceServer.html)
 
+# Stream 8
+## Interstream :cow:
+* Garder les sauts de ligne
+
+## Plan
+* Full connexion WebRTC
 
 # Stream X ?
 ## Plan

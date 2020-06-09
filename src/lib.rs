@@ -2,6 +2,7 @@ use chat_message::{SenderType, ChatMessage};
 use yew::prelude::*;
 mod chat_message;
 mod chatbox;
+mod web_rtc;
 
 pub struct App {
     link: ComponentLink<Self>,
@@ -18,6 +19,7 @@ impl Component for App {
 
     // https://doc.rust-lang.org/rust-by-example/trait.html
     fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
+        web_rtc::WebRTC::connect();
         Self {
             link,
             chat_messages: vec![],
