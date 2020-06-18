@@ -7,6 +7,7 @@ mod web_rtc;
 pub struct App {
     link: ComponentLink<Self>,
     chat_messages: Vec<ChatMessage>,
+    web_rtc: web_rtc::WebRTC,
 }
 
 pub enum ActionMessage {
@@ -19,10 +20,12 @@ impl Component for App {
 
     // https://doc.rust-lang.org/rust-by-example/trait.html
     fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
-        web_rtc::WebRTC::connect();
+        let mut web_rtc = web_rtc::WebRTC::new();
+        web_rtc.connect();
         Self {
             link,
             chat_messages: vec![],
+            web_rtc,
         }
     }
 
