@@ -1,12 +1,15 @@
 use js_sys::Array;
+use wasm_bindgen::JsCast;
 use wasm_bindgen::prelude::*;
-use web_sys::{RtcConfiguration, RtcIceServer, RtcPeerConnection};
+use web_sys::{
+    RtcConfiguration, RtcIceServer, RtcPeerConnection, RtcSessionDescriptionInit,
+};
 
 pub struct WebRTC {
     // https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.RtcPeerConnection.html
     connection: RtcPeerConnection,
     // This will act as a lifetime container for our callbacks.
-    callbacks: Vec<Closure<dyn FnMut(JsValue)>>
+    callbacks: Vec<Closure<dyn FnMut(JsValue)>>,
 }
 
 impl WebRTC {
@@ -19,33 +22,43 @@ impl WebRTC {
         Self {
             // TODO : Handle errors
             connection: RtcPeerConnection::new_with_configuration(&configuration).expect("OUPS"),
-            callbacks: vec!()
+            callbacks: vec![],
         }
     }
 
+    #[allow(unused_must_use)]
     pub fn connect(&mut self) {
-        let disney_channel = self.connection.create_data_channel("disney_channel");
+        let _disney_channel = self.connection.create_data_channel("disney_channel");
         // connection.peer_identity().then(&closure);
 
         // TODO : 1 Exchanging session descriptions
         //  Create an offer with a SDP
-        let exception_callback = Closure::wrap(Box::new(move |a: JsValue| {
+        let exception_callback = Closure::wrap(Box::new(|a: JsValue| {
             log::error!("An error occured during offer creation");
             log::error!("{:?}", &a);
         }) as Box<dyn FnMut(JsValue)>);
-        let callback = Closure::wrap(Box::new(|offer: JsValue| {
-            log::info!("{:?}", offer);
+        let offer_callback = Closure::wrap(Box::new(move |offer: JsValue| {
+            match offer.dyn_into::<RtcSessionDescriptionInit>() {
+                Ok(offer) => {
+                    log::info!("{:?}", offer);
+                    // This line cause an issue as the self might not be available after the end of the function
+                    // To fix this we need to find a way to tell the compiler that this object will still leave till there.
+                    // self.connection.set_local_description(&offer);
+                },
+                Err(e) => {log::error!("{:?}", e);},
+            };
         }) as Box<dyn FnMut(JsValue)>);
+        
         self.connection
             .create_offer()
-            .then(&callback)
+            .then(&offer_callback)
             .catch(&exception_callback);
 
         // We could do this but this is a memory leak.
         // callback.forget();
 
         // Doing this ties the lifetime of the callback to the lifetime of the WebRtc object
-        self.callbacks.push(callback);
+        self.callbacks.push(offer_callback);
         self.callbacks.push(exception_callback);
 
         // TODO 2:  Exchanging ICE candidates

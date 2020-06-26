@@ -185,7 +185,15 @@ RAS
 ## Plan
 * Full connexion WebRTC
 
-# Stream X ?
+## Réalisation
+* Create offer call
+    * [Closure](https://rustwasm.github.io/wasm-bindgen/api/wasm_bindgen/closure/struct.Closure.html)
+
+# Stream 9
 ## Plan
-* Tests
-* CI github action ?
+* Re-explication diagramme de sequence
+* Finalisation create_offer et explication lifetime / Box
+* Le plan de la base du feu
+
+## Réalisation
+* parsing d'une JSValue vers un objet RTCSessionInitDescription dans le but de set la local_description

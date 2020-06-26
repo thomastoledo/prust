@@ -1,4 +1,4 @@
-use chat_message::{SenderType, ChatMessage};
+use chat_message::{ChatMessage, SenderType};
 use yew::prelude::*;
 mod chat_message;
 mod chatbox;

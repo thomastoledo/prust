@@ -1,5 +1,6 @@
 use std::fmt::{Display, Formatter, Result};
 use yew::prelude::*;
+
 #[derive(Clone)]
 pub enum SenderType {
     ME,
