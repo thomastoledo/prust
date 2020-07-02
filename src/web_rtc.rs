@@ -1,9 +1,9 @@
 use js_sys::Array;
-use wasm_bindgen::JsCast;
+use std::cell::RefCell;
+use std::rc::Rc;
 use wasm_bindgen::prelude::*;
-use web_sys::{
-    RtcConfiguration, RtcIceServer, RtcPeerConnection, RtcSessionDescriptionInit,
-};
+use wasm_bindgen::JsCast;
+use web_sys::{RtcConfiguration, RtcIceServer, RtcPeerConnection, RtcSessionDescriptionInit};
 
 pub struct WebRTC {
     // https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.RtcPeerConnection.html
@@ -19,37 +19,44 @@ impl WebRTC {
 
         let mut configuration = RtcConfiguration::new();
         configuration.ice_servers(&Array::of1(&ice_server));
+        // TODO : Handle exception
+        let peer_connection = RtcPeerConnection::new_with_configuration(&configuration).expect("OUPS"); 
         Self {
-            // TODO : Handle errors
-            connection: RtcPeerConnection::new_with_configuration(&configuration).expect("OUPS"),
+            connection: peer_connection,
             callbacks: vec![],
         }
     }
 
     #[allow(unused_must_use)]
-    pub fn connect(&mut self) {
-        let _disney_channel = self.connection.create_data_channel("disney_channel");
-        // connection.peer_identity().then(&closure);
+    pub fn connect(web_rtc: Rc<RefCell<WebRTC>>) {
+        // TODO : Handle exception
+        let _disney_channel = web_rtc.borrow_mut().connection.create_data_channel("disney_channel");
+        // web_rtc.borrow_mut().connection.peer_identity().then(&closure);
 
         // TODO : 1 Exchanging session descriptions
         //  Create an offer with a SDP
-        let exception_callback = Closure::wrap(Box::new(|a: JsValue| {
+        let web_rtc_manager_rc_clone = Rc::clone(&web_rtc);
+        let offer_function: Box<dyn FnMut(JsValue)> = Box::new(move |offer: JsValue| {
+            // TODO: Error handling : dyn_into seems to not be recognized at runtime.
+            let offer = offer.unchecked_into::<RtcSessionDescriptionInit>();
+
+            // TODO : Add catch handler closure
+            web_rtc_manager_rc_clone
+            .borrow()
+            .connection
+            .set_local_description(&offer);
+        });
+        let offer_callback = Closure::wrap(offer_function);
+
+        let exception_function: Box<dyn FnMut(JsValue)> = Box::new(|a: JsValue| {
             log::error!("An error occured during offer creation");
             log::error!("{:?}", &a);
-        }) as Box<dyn FnMut(JsValue)>);
-        let offer_callback = Closure::wrap(Box::new(move |offer: JsValue| {
-            match offer.dyn_into::<RtcSessionDescriptionInit>() {
-                Ok(offer) => {
-                    log::info!("{:?}", offer);
-                    // This line cause an issue as the self might not be available after the end of the function
-                    // To fix this we need to find a way to tell the compiler that this object will still leave till there.
-                    // self.connection.set_local_description(&offer);
-                },
-                Err(e) => {log::error!("{:?}", e);},
-            };
-        }) as Box<dyn FnMut(JsValue)>);
-        
-        self.connection
+        });
+        let exception_callback = Closure::wrap(exception_function);
+
+        let _create_offer_promise = web_rtc
+            .borrow_mut()
+            .connection
             .create_offer()
             .then(&offer_callback)
             .catch(&exception_callback);
@@ -58,8 +65,8 @@ impl WebRTC {
         // callback.forget();
 
         // Doing this ties the lifetime of the callback to the lifetime of the WebRtc object
-        self.callbacks.push(offer_callback);
-        self.callbacks.push(exception_callback);
+        web_rtc.borrow_mut().callbacks.push(offer_callback);
+        web_rtc.borrow_mut().callbacks.push(exception_callback);
 
         // TODO 2:  Exchanging ICE candidates
 

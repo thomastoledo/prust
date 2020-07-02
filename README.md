@@ -197,3 +197,13 @@ RAS
 
 ## Réalisation
 * parsing d'une JSValue vers un objet RTCSessionInitDescription dans le but de set la local_description
+
+# Stream 10
+## Plan
+* [Pokiro](https://gitlab.com/AurelienR/pokiro/)
+* Problème de lifetime modification de la connection dans closure
+
+## Réalisation
+* Lifetime
+    * [Rc](https://doc.rust-lang.org/std/rc/index.html)
+    * [RefCell](https://doc.rust-lang.org/std/cell/struct.RefCell.html)

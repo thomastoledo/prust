@@ -3,11 +3,13 @@ use yew::prelude::*;
 mod chat_message;
 mod chatbox;
 mod web_rtc;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 pub struct App {
     link: ComponentLink<Self>,
     chat_messages: Vec<ChatMessage>,
-    web_rtc: web_rtc::WebRTC,
+    web_rtc: Rc<RefCell<web_rtc::WebRTC>>,
 }
 
 pub enum ActionMessage {
@@ -20,12 +22,12 @@ impl Component for App {
 
     // https://doc.rust-lang.org/rust-by-example/trait.html
     fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
-        let mut web_rtc = web_rtc::WebRTC::new();
-        web_rtc.connect();
+        let web_rtc_manager = Rc::new(RefCell::new(web_rtc::WebRTC::new()));
+        web_rtc::WebRTC::connect(Rc::clone(&web_rtc_manager));
         Self {
             link,
             chat_messages: vec![],
-            web_rtc,
+            web_rtc: web_rtc_manager.clone(),
         }
     }
 
