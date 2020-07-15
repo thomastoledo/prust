@@ -89,3 +89,23 @@ body {
     max-width: 50%;
     margin: 4px 0;
 }
+
+/* CONNECT BOX */
+
+.connect_box {
+    min-height: 400px;
+    width: 300px;
+    overflow-wrap: break-word;
+    position: absolute;
+    z-index: 1;
+    background: #ffffff;
+    border: 1px solid #000000;
+    top: 0;
+    left: 0;
+}
+
+.connect_box__textarea {
+    height: 100%;
+    width: 90%;
+    resize: vertical;
+}

@@ -7,7 +7,7 @@ use web_sys::{RtcConfiguration, RtcIceServer, RtcPeerConnection, RtcSessionDescr
 
 pub struct WebRTC {
     // https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.RtcPeerConnection.html
-    connection: RtcPeerConnection,
+    pub connection: RtcPeerConnection,
     // This will act as a lifetime container for our callbacks.
     callbacks: Vec<Closure<dyn FnMut(JsValue)>>,
 }
@@ -40,6 +40,7 @@ impl WebRTC {
             // TODO: Error handling : dyn_into seems to not be recognized at runtime.
             let offer = offer.unchecked_into::<RtcSessionDescriptionInit>();
 
+            log::info!("{:?}", offer);
             // TODO : Add catch handler closure
             web_rtc_manager_rc_clone
             .borrow()

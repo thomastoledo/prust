@@ -207,3 +207,11 @@ RAS
 * Lifetime
     * [Rc](https://doc.rust-lang.org/std/rc/index.html)
     * [RefCell](https://doc.rust-lang.org/std/cell/struct.RefCell.html)
+
+# Stream 11
+## Plan
+* Envoi offre
+    * Ajouter les éléments pour le signaling manuel
+
+## Notes
+Simple example de WebRTC connection (avec copie d'offer) : https://github.com/fippo/minimal-webrtc/blob/master/js/main.js
