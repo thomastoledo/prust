@@ -213,5 +213,13 @@ RAS
 * Envoi offre
     * Ajouter les éléments pour le signaling manuel
 
-## Notes
-Simple example de WebRTC connection (avec copie d'offer) : https://github.com/fippo/minimal-webrtc/blob/master/js/main.js
+# Stream 12
+## Plan
+* Signaling server WebRTC, Thomas nous dit tout
+* Coder en Rust, après les vacances ...
+* Nouvelles interfaces
+
+## Réalisation
+* [Explications WebRTC](https://github.com/nugetchar/signaling-server-poc)
+* Début de la structure de [modules](https://doc.rust-lang.org/reference/items/modules.html)
+* Début du composant de connexion

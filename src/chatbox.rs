@@ -16,21 +16,15 @@ impl ChatBox {
             input.set_value("");
         }
     }
-
-    fn connect(&self) {
-        self.props.on_connect.emit(());
-    }
 }
 
 #[derive(Properties, Clone)]
 pub struct ChatBoxProps {
     pub on_send: Callback<String>,
-    pub on_connect: Callback<()>
 }
 
 pub enum Msg {
     SendMessage,
-    Connect,
     ReturnCarriage(KeyboardEvent),
 }
 
@@ -55,10 +49,6 @@ impl Component for ChatBox {
                     self.send_message();
                     e.prevent_default();
                 }
-            },
-
-            Msg::Connect => {
-                self.connect();
             }
         };
         true
@@ -81,7 +71,6 @@ impl Component for ChatBox {
                         placeholder="Type something...">
                     </textarea>
                     <input type="button" onclick=self.link.callback(|_| Msg::SendMessage) class="material-icons" value="flight_takeoff"/>
-                    <input type="button" onclick=self.link.callback(|_| Msg::Connect) class="material-icons" value="outlet"/>
                 </form>
                 
             </>

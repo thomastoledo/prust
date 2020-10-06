@@ -1,9 +1,12 @@
+#![recursion_limit="512"]
+
 use chat_message::{ChatMessage, SenderType};
 use yew::prelude::*;
 mod chat_message;
 mod chatbox;
-mod connect_box;
 mod web_rtc;
+mod components;
+
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -29,7 +32,7 @@ impl Component for App {
         Self {
             link,
             chat_messages: vec![],
-            web_rtc: web_rtc_manager.clone(),
+            web_rtc: web_rtc_manager,
             display_connect: false,
         }
     }
@@ -55,27 +58,16 @@ impl Component for App {
     }
 
     fn view(&self) -> Html {
-        let maybe_display_connect = move || -> Html {
-            if self.display_connect {
-                html! {
-                  <connect_box::ConnectBox web_rtc=Rc::clone(&self.web_rtc)></connect_box::ConnectBox>
-                }
-            } else {
-                html! {}
-            }
-        };
         html! {
             <>
                 <section class="app">
+                    <components::connect::Connect></components::connect::Connect>
                     <section class="conversation-container">
                         { self.chat_messages.iter().map(|message| message.view()).collect::<Html>() }
                     </section>
-                    <chatbox::ChatBox
-                        on_send=self.link.callback(|message: String| ActionMessage::OnReceive(message))
-                        on_connect=self.link.callback(|_| ActionMessage::OnConnect())>
+                    <chatbox::ChatBox on_send=self.link.callback(|message: String| ActionMessage::OnReceive(message))>
                     </chatbox::ChatBox>
                 </section>
-                {{maybe_display_connect()}}
             </>
         }
     }
