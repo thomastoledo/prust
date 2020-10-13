@@ -14,16 +14,32 @@ body {
 }
 
 .app {
+    display: flex;
+    flex-wrap: nowrap;
+    width: 100%;
+    padding: 16px;
+    max-width: 900px;
+    margin: auto;
+}
+
+.app__connect {
+    width: min-content;
+    flex-shrink: 1;
+    height: min-content;
+    background-color: #ffcaca;
+    margin: 8px;
+}
+
+.app__chat {
     height: var(--height-app);
     display: flex;
     flex-wrap: wrap;
-    max-width: 700px;
-    margin: 0 auto;
-    padding: var(--padding-app); 
     align-items: center;
+    width: 80%;
+    margin: 8px auto;
 }
 
-.app > * {
+.app__chat > * {
     width: 100%;
 }
 
@@ -108,4 +124,12 @@ body {
     height: 100%;
     width: 90%;
     resize: vertical;
+}
+
+.connect__form {
+    padding: 8px;
+}
+
+.connected {
+    display: none;
 }

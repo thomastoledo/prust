@@ -223,3 +223,15 @@ RAS
 * [Explications WebRTC](https://github.com/nugetchar/signaling-server-poc)
 * Début de la structure de [modules](https://doc.rust-lang.org/reference/items/modules.html)
 * Début du composant de connexion
+
+# Stream 13
+## Plan
+* Wtf : Recursive limit ?
+    * https://yew.rs/docs/en/concepts/html/
+* Belle structure de module
+    * OK
+* Début Websocket + WebRTC !
+    * https://rustwasm.github.io/docs/wasm-bindgen/examples/websockets.html
+    * OnOpen / OnMessage ... 
+        * https://docs.rs/web-sys/0.3.45/web_sys/struct.WebSocket.html
+        * https://github.com/rustwasm/wasm-bindgen

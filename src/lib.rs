@@ -1,14 +1,15 @@
-#![recursion_limit="512"]
+#![recursion_limit = "1024"]
 
-use chat_message::{ChatMessage, SenderType};
-use yew::prelude::*;
-mod chat_message;
-mod chatbox;
-mod web_rtc;
 mod components;
+mod web_rtc;
+mod utils;
 
+use yew::prelude::*;
 use std::cell::RefCell;
 use std::rc::Rc;
+
+use components::chat_message::{ChatMessage, SenderType};
+use utils::FromTo;
 
 pub struct App {
     link: ComponentLink<Self>,
@@ -19,7 +20,7 @@ pub struct App {
 
 pub enum ActionMessage {
     OnReceive(String),
-    OnConnect(),
+    OnConnect(FromTo),
 }
 
 impl Component for App {
@@ -44,8 +45,8 @@ impl Component for App {
                 self.chat_messages.push(received_message.clone());
                 received_message.network_send();
             }
-            ActionMessage::OnConnect() => {
-                self.display_connect = !self.display_connect;
+            ActionMessage::OnConnect(fromTo) => {
+                web_rtc::WebRTC::connect(self.web_rtc.clone(), fromTo)
             }
         };
         true
@@ -61,12 +62,16 @@ impl Component for App {
         html! {
             <>
                 <section class="app">
-                    <components::connect::Connect></components::connect::Connect>
-                    <section class="conversation-container">
-                        { self.chat_messages.iter().map(|message| message.view()).collect::<Html>() }
+                    <section class="app__connect">
+                        <components::connect::Connect on_connect=self.link.callback(|fromTo: FromTo| ActionMessage::OnConnect(fromTo))></components::connect::Connect>
                     </section>
-                    <chatbox::ChatBox on_send=self.link.callback(|message: String| ActionMessage::OnReceive(message))>
-                    </chatbox::ChatBox>
+                    <section class="app__chat">
+                        <section class="conversation-container">
+                            { self.chat_messages.iter().map(|message| message.view()).collect::<Html>() }
+                        </section>
+                        <components::chatbox::ChatBox on_send=self.link.callback(|message: String| ActionMessage::OnReceive(message))>
+                        </components::chatbox::ChatBox>
+                    </section>
                 </section>
             </>
         }

@@ -1,9 +1,13 @@
-use js_sys::Array;
 use std::cell::RefCell;
 use std::rc::Rc;
+
+use crate::utils::FromTo;
+use js_sys::Array;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
-use web_sys::{RtcConfiguration, RtcIceServer, RtcPeerConnection, RtcSessionDescriptionInit};
+use web_sys::{
+    RtcConfiguration, RtcIceServer, RtcPeerConnection, RtcSessionDescriptionInit, WebSocket,
+};
 
 pub struct WebRTC {
     // https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.RtcPeerConnection.html
@@ -20,7 +24,8 @@ impl WebRTC {
         let mut configuration = RtcConfiguration::new();
         configuration.ice_servers(&Array::of1(&ice_server));
         // TODO : Handle exception
-        let peer_connection = RtcPeerConnection::new_with_configuration(&configuration).expect("OUPS"); 
+        let peer_connection =
+            RtcPeerConnection::new_with_configuration(&configuration).expect("OUPS");
         Self {
             connection: peer_connection,
             callbacks: vec![],
@@ -28,92 +33,81 @@ impl WebRTC {
     }
 
     #[allow(unused_must_use)]
-    pub fn connect(web_rtc: Rc<RefCell<WebRTC>>) {
+    pub fn connect(web_rtc: Rc<RefCell<WebRTC>>, from_to: FromTo) {
+        let ws =
+            WebSocket::new("wss://glacial-beyond-33808.herokuapp.com/socket.io/?transport=polling")
+                .unwrap();
+
+        // Is equivalent to onConnect in JS
+        let _ = ws.clone();
+        let cloned_ws = ws.clone();
+        let onopen_callback = Closure::wrap(Box::new(move |_| {
+            log::info!("socket opened");
+            //socket.emit('newUser', {userFrom, userTo});
+            let send_res = cloned_ws.send_with_str(
+                format!("{{
+                    \"type\": \"newUser\",
+                    \"userFrom\": \"{}\"
+                    \"userTo\": \"{}\"
+                    }}", from_to.0, from_to.1)
+                .as_ref()
+            );
+            match send_res {
+                Ok(_) => log::info!("Should have worked"),
+                Err(ex) => log::error!("Did not work {:?}", ex),
+            }
+        }) as Box<dyn FnMut(JsValue)>);
+        ws.set_onopen(Some(onopen_callback.as_ref().unchecked_ref()));
+        onopen_callback.forget();
+
+        let onclose_callback = Closure::wrap(Box::new(move |_| {
+            log::info!("socket closed");
+        }) as Box<dyn FnMut(JsValue)>);
+        ws.set_onclose(Some(onclose_callback.as_ref().unchecked_ref()));
+        onclose_callback.forget();
+
         // TODO : Handle exception
-        let _disney_channel = web_rtc.borrow_mut().connection.create_data_channel("disney_channel");
+        // let _disney_channel = web_rtc
+        //     .borrow_mut()
+        //     .connection
+        //     .create_data_channel("disney_channel");
         // web_rtc.borrow_mut().connection.peer_identity().then(&closure);
 
         // TODO : 1 Exchanging session descriptions
         //  Create an offer with a SDP
-        let web_rtc_manager_rc_clone = Rc::clone(&web_rtc);
-        let offer_function: Box<dyn FnMut(JsValue)> = Box::new(move |offer: JsValue| {
-            // TODO: Error handling : dyn_into seems to not be recognized at runtime.
-            let offer = offer.unchecked_into::<RtcSessionDescriptionInit>();
+        // let web_rtc_manager_rc_clone = Rc::clone(&web_rtc);
+        // let offer_function: Box<dyn FnMut(JsValue)> = Box::new(move |offer: JsValue| {
+        //     // TODO: Error handling : dyn_into seems to not be recognized at runtime.
+        //     let offer = offer.unchecked_into::<RtcSessionDescriptionInit>();
 
-            log::info!("{:?}", offer);
-            // TODO : Add catch handler closure
-            web_rtc_manager_rc_clone
-            .borrow()
-            .connection
-            .set_local_description(&offer);
-        });
-        let offer_callback = Closure::wrap(offer_function);
+        //     log::info!("{:?}", offer);
+        //     // TODO : Add catch handler closure
+        //     web_rtc_manager_rc_clone
+        //         .borrow()
+        //         .connection
+        //         .set_local_description(&offer);
+        // });
+        // let offer_callback = Closure::wrap(offer_function);
 
-        let exception_function: Box<dyn FnMut(JsValue)> = Box::new(|a: JsValue| {
-            log::error!("An error occured during offer creation");
-            log::error!("{:?}", &a);
-        });
-        let exception_callback = Closure::wrap(exception_function);
+        // let exception_function: Box<dyn FnMut(JsValue)> = Box::new(|a: JsValue| {
+        //     log::error!("An error occured during offer creation");
+        //     log::error!("{:?}", &a);
+        // });
+        // let exception_callback = Closure::wrap(exception_function);
 
-        let _create_offer_promise = web_rtc
-            .borrow_mut()
-            .connection
-            .create_offer()
-            .then(&offer_callback)
-            .catch(&exception_callback);
+        // let _create_offer_promise = web_rtc
+        //     .borrow_mut()
+        //     .connection
+        //     .create_offer()
+        //     .then(&offer_callback)
+        //     .catch(&exception_callback);
 
-        // We could do this but this is a memory leak.
-        // callback.forget();
-
-        // Doing this ties the lifetime of the callback to the lifetime of the WebRtc object
-        web_rtc.borrow_mut().callbacks.push(offer_callback);
-        web_rtc.borrow_mut().callbacks.push(exception_callback);
+        // // Doing this ties the lifetime of the callback to the lifetime of the WebRtc object
+        // web_rtc.borrow_mut().callbacks.push(offer_callback);
+        // web_rtc.borrow_mut().callbacks.push(exception_callback);
 
         // TODO 2:  Exchanging ICE candidates
 
         // TODO 3: Listen SDP offers and send SDP answers
-
-        // let candidate = Some(&RtcIceCandidate::candidate("duwhqudhuwqdhuiwq hiudqhw uidhuwq hidhqwiu "))
-        // connection.add_ice_candidate_with_opt_rtc_ice_candidate()
-        // connection.set_onicecandidate(Some(|e| => )
     }
 }
-
-// function connectPeers() {
-//     // Create the data channel and establish its event listeners
-//     sendChannel = localConnection.createDataChannel("sendChannel");
-//     sendChannel.onopen = handleSendChannelStatusChange;
-//     sendChannel.onclose = handleSendChannelStatusChange;
-
-//     // Create the remote connection and its event listeners
-
-//     remoteConnection = new RTCPeerConnection();
-//     remoteConnection.ondatachannel = receiveChannelCallback;
-
-//     // Set up the ICE candidates for the two peers
-
-//     localConnection.onicecandidate = e => !e.candidate
-//         || remoteConnection.addIceCandidate(e.candidate)
-//         .catch(handleAddCandidateError);
-
-//     remoteConnection.onicecandidate = e => !e.candidate
-//         || localConnection.addIceCandidate(e.candidate)
-//         .catch(handleAddCandidateError);
-
-//     // Now create an offer to connect; this starts the process
-
-//     localConnection.createOffer()
-//     .then(offer => localConnection.setLocalDescription(offer))
-//     .then(() => remoteConnection.setRemoteDescription(localConnection.localDescription))
-//     .then(() => remoteConnection.createAnswer())
-//     .then(answer => remoteConnection.setLocalDescription(answer))
-//     .then(() => localConnection.setRemoteDescription(remoteConnection.localDescription))
-//     .catch(handleCreateDescriptionError);
-//   }
-
-// function receiveChannelCallback(event) {
-//     receiveChannel = event.channel;
-//     receiveChannel.onmessage = handleReceiveMessage;
-//     receiveChannel.onopen = handleReceiveChannelStatusChange;
-//     receiveChannel.onclose = handleReceiveChannelStatusChange;
-//   }
