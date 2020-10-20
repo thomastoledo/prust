@@ -45,8 +45,8 @@ impl Component for App {
                 self.chat_messages.push(received_message.clone());
                 received_message.network_send();
             }
-            ActionMessage::OnConnect(fromTo) => {
-                web_rtc::WebRTC::connect(self.web_rtc.clone(), fromTo)
+            ActionMessage::OnConnect(from_to) => {
+                web_rtc::WebRTC::connect(self.web_rtc.clone(), from_to)
             }
         };
         true

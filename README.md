@@ -235,3 +235,18 @@ RAS
     * OnOpen / OnMessage ... 
         * https://docs.rs/web-sys/0.3.45/web_sys/struct.WebSocket.html
         * https://github.com/rustwasm/wasm-bindgen
+
+# Stream 14
+## Realisation
+* Presentation modifications server
+* WebSocket => Ajout des premiers messages
+* Serialisation:
+    * Serde: https://serde.rs/
+    * Deserialization en fonction du type: https://serde.rs/enum-representations.html#externally-tagged
+* Refacto dans utils
+
+# Stream 15
+## Plan
+* améliorer la lisibilité du code (gestion des closures)
+* type alias sur les cast des closures
+* continuer la gestion des websocket (améliorer la serde)

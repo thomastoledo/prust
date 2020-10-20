@@ -47,9 +47,10 @@ impl Component for Connect {
                     log::debug!("MyName: {}", input_name.value());
                     log::debug!("MyName: {}", other_name.value());
                     // Emit this in lib.rs
-                    self.props
-                        .on_connect
-                        .emit(FromTo(input_name.value(), other_name.value()));
+                    self.props.on_connect.emit(FromTo {
+                        user_from: input_name.value(),
+                        user_to: other_name.value(),
+                    });
                     self.display_connect = false;
                 } else {
                     log::error!("Both names are mandatory");

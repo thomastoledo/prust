@@ -1,3 +1,5 @@
+use serde::{Serialize, Deserialize};
+
 pub fn set_panic_hook() {
     // When the `console_error_panic_hook` feature is enabled, we can call the
     // `set_panic_hook` function at least once during initialization, and then
@@ -9,4 +11,26 @@ pub fn set_panic_hook() {
     console_error_panic_hook::set_once();
 }
 
-pub struct FromTo(pub String, pub String); // Tuple struct item.0 / item.1
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(tag = "type")]
+pub enum SocketMessage {
+    #[serde(rename = "newUser")]
+    NewUser { content: FromTo },
+    #[serde(rename = "signal_message_to_client")]
+    SignalMessageToClient { content: SignalingMessage },
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(tag = "signalType")]
+enum SignalingMessage {
+    #[serde(rename = "userHere")]
+    UserHere {message: String}
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct FromTo {
+    #[serde(rename = "userFrom")]
+    pub user_from: String,
+    #[serde(rename = "userTo")]
+    pub user_to: String,
+}

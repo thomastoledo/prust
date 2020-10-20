@@ -1,13 +1,20 @@
+use js_sys::{Array, JsString};
+use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
+use std::fmt::{Display, Error, Formatter};
 use std::rc::Rc;
-
-use crate::utils::FromTo;
-use js_sys::Array;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use web_sys::{
-    RtcConfiguration, RtcIceServer, RtcPeerConnection, RtcSessionDescriptionInit, WebSocket,
+    MessageEvent,
+    RtcConfiguration,
+    RtcIceServer,
+    RtcPeerConnection,
+    RtcSessionDescriptionInit,
+    WebSocket,
 };
+
+use crate::utils::{FromTo, SocketMessage};
 
 pub struct WebRTC {
     // https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.RtcPeerConnection.html
@@ -34,27 +41,21 @@ impl WebRTC {
 
     #[allow(unused_must_use)]
     pub fn connect(web_rtc: Rc<RefCell<WebRTC>>, from_to: FromTo) {
-        let ws =
-            WebSocket::new("wss://glacial-beyond-33808.herokuapp.com/socket.io/?transport=polling")
-                .unwrap();
+        let ws = WebSocket::new("wss://glacial-beyond-33808.herokuapp.com").unwrap();
 
         // Is equivalent to onConnect in JS
         let _ = ws.clone();
         let cloned_ws = ws.clone();
         let onopen_callback = Closure::wrap(Box::new(move |_| {
             log::info!("socket opened");
-            //socket.emit('newUser', {userFrom, userTo});
-            let send_res = cloned_ws.send_with_str(
-                format!("{{
-                    \"type\": \"newUser\",
-                    \"userFrom\": \"{}\"
-                    \"userTo\": \"{}\"
-                    }}", from_to.0, from_to.1)
-                .as_ref()
-            );
+
+            let new_user_message = SocketMessage::NewUser { content: from_to.clone() };
+            let json_new_user_message = serde_json::to_string(&new_user_message).unwrap();
+
+            let send_res = cloned_ws.send_with_str(json_new_user_message.as_ref());
             match send_res {
-                Ok(_) => log::info!("Should have worked"),
-                Err(ex) => log::error!("Did not work {:?}", ex),
+                Ok(_) => (),
+                Err(ex) => log::error!("Could not connect to websocket {:?}", ex),
             }
         }) as Box<dyn FnMut(JsValue)>);
         ws.set_onopen(Some(onopen_callback.as_ref().unchecked_ref()));
@@ -65,6 +66,16 @@ impl WebRTC {
         }) as Box<dyn FnMut(JsValue)>);
         ws.set_onclose(Some(onclose_callback.as_ref().unchecked_ref()));
         onclose_callback.forget();
+
+        let on_message_callback = Closure::wrap(Box::new(move |message: MessageEvent| {
+            if let Ok(socket_message) = message.data().dyn_into::<JsString>() {
+                log::info!("I parsed it correctly: {:?}", socket_message);
+            } else {
+                log::error!("Could not parse message {:?}", message);
+            }
+        }) as Box<dyn FnMut(MessageEvent)>);
+        ws.set_onmessage(Some(on_message_callback.as_ref().unchecked_ref()));
+        on_message_callback.forget();
 
         // TODO : Handle exception
         // let _disney_channel = web_rtc
