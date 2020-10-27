@@ -22,9 +22,9 @@ pub enum SocketMessage {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "signalType")]
-enum SignalingMessage {
+pub enum SignalingMessage {
     #[serde(rename = "userHere")]
-    UserHere {message: String}
+    UserHere {message: u16}
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

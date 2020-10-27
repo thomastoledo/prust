@@ -68,10 +68,14 @@ impl WebRTC {
         onclose_callback.forget();
 
         let on_message_callback = Closure::wrap(Box::new(move |message: MessageEvent| {
+            // TODO: Ideally we would like to do that
+            // if let Ok(socket_message) = message.data().into_serde::<SocketMessage>() {
+            //     log::info!("I parsed it correctly: {:?}", socket_message);
             if let Ok(socket_message) = message.data().dyn_into::<JsString>() {
-                log::info!("I parsed it correctly: {:?}", socket_message);
+                let deser_socket = serde_json::from_str::<SocketMessage>(&String::from(socket_message));
+                log::info!("I parsed it correctly: {:?}", deser_socket);
             } else {
-                log::error!("Could not parse message {:?}", message);
+                log::error!("Could not parse message data {:?}", message.data());
             }
         }) as Box<dyn FnMut(MessageEvent)>);
         ws.set_onmessage(Some(on_message_callback.as_ref().unchecked_ref()));

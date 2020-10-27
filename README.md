@@ -250,3 +250,12 @@ RAS
 * améliorer la lisibilité du code (gestion des closures)
 * type alias sur les cast des closures
 * continuer la gestion des websocket (améliorer la serde)
+
+## Realisation
+* Misc
+    * gsv => (repo git comming soon)
+    * Refacto [Clap](https://docs.rs/clap/2.33.3/clap/) / [Structopt](https://docs.rs/structopt/0.3.20/structopt/)
+
+* PRUST
+    * Parsing du message reçu : dyn_into => JsString
+    * Parsing de la JsString avec `serde_json::from_str::` => nos types
