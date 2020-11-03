@@ -1,0 +1,30 @@
+[tasks.format]
+install_crate = "rustfmt"
+command = "cargo"
+args = ["fmt", "--", "--emit=files"]
+
+[tasks.clean]
+command = "cargo"
+args = ["clean"]
+
+[tasks.dev]
+command = "cargo"
+# dependencies = ["wasm-bind"] TODO: Is it possible to have a dependency that watch ?
+args = [
+    "build",
+    "--features=console_error_panic_hook",
+    "--target=wasm32-unknown-unknown"
+]
+watch = true
+
+[tasks.wasm-bind]
+script = [
+    "wasm-bindgen --target web --no-typescript --out-dir static/ --out-name app target/wasm32-unknown-unknown/debug/prust.wasm"
+]
+watch = true
+
+[tasks.serve]
+script = [
+    "cd static/",
+    "python3 -m http.server"
+]

@@ -1,7 +1,6 @@
 use std::fmt::{Display, Formatter, Result};
 use yew::prelude::*;
 
-
 #[derive(Clone)]
 pub enum SenderType {
     ME,
@@ -24,12 +23,8 @@ pub struct ChatMessage {
 }
 
 impl ChatMessage {
-
-    pub fn new(from: SenderType, content:String) -> Self {
-        Self {
-            from,
-            content
-        }
+    pub fn new(from: SenderType, content: String) -> Self {
+        Self { from, content }
     }
 
     pub fn view(&self) -> Html {

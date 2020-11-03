@@ -259,3 +259,34 @@ RAS
 * PRUST
     * Parsing du message reçu : dyn_into => JsString
     * Parsing de la JsString avec `serde_json::from_str::` => nos types
+
+# Stream 16
+## Interstream
+* New way to start the project
+    * [cargo make](https://github.com/sagiegurari/cargo-make)
+    * `cargo make --makefile Makefile.toml dev`
+    * `cargo make --makefile Makefile.toml serve`
+
+## Plan
+* type alias sur les cast des closures
+* améliorer serde (implement From for SocketMessage ?)
+* continuer la gestion des websocket
+* améliorer la lisibilité du code (gestion des closures) // Peut on les sortir
+
+## Réalisation
+* fix `cargo make`
+* type alias ok
+* amélioration serde
+    * implémentation du trait `TryFrom`
+    * management des erreurs custom
+    * utilisation de l'opérateur `?`
+    * problème Object VS String VS Websockets
+
+# Stream 17
+## Interstream
+* cargo make concurrency between build / wasm-bind (lol)
+* cleanup des TODOs
+* améliorer la lisibilité du code (gestion des closures)
+
+## Plan
+* continuer la gestion des websocket

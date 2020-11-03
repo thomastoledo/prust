@@ -1,12 +1,12 @@
 #![recursion_limit = "1024"]
 
 mod components;
-mod web_rtc;
 mod utils;
+mod web_rtc;
 
-use yew::prelude::*;
 use std::cell::RefCell;
 use std::rc::Rc;
+use yew::prelude::*;
 
 use components::chat_message::{ChatMessage, SenderType};
 use utils::FromTo;
@@ -15,7 +15,6 @@ pub struct App {
     link: ComponentLink<Self>,
     chat_messages: Vec<ChatMessage>,
     web_rtc: Rc<RefCell<web_rtc::WebRTC>>,
-    display_connect: bool,
 }
 
 pub enum ActionMessage {
@@ -34,7 +33,6 @@ impl Component for App {
             link,
             chat_messages: vec![],
             web_rtc: web_rtc_manager,
-            display_connect: false,
         }
     }
 

@@ -1,3 +1,3 @@
-pub mod connect;
-pub mod chatbox;
 pub mod chat_message;
+pub mod chatbox;
+pub mod connect;

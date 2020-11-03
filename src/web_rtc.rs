@@ -1,20 +1,17 @@
-use js_sys::{Array, JsString};
-use serde::{Deserialize, Serialize};
-use std::cell::RefCell;
-use std::fmt::{Display, Error, Formatter};
+use js_sys::Array;
 use std::rc::Rc;
+use std::{cell::RefCell, convert::TryFrom};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use web_sys::{
-    MessageEvent,
-    RtcConfiguration,
-    RtcIceServer,
-    RtcPeerConnection,
-    RtcSessionDescriptionInit,
+    MessageEvent, RtcConfiguration, RtcIceServer, RtcPeerConnection, RtcSessionDescriptionInit,
     WebSocket,
 };
 
 use crate::utils::{FromTo, SocketMessage};
+
+type BoxDynJsValue = Box<dyn FnMut(JsValue)>;
+type BoxDynMessageEvent = Box<dyn FnMut(MessageEvent)>;
 
 pub struct WebRTC {
     // https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.RtcPeerConnection.html
@@ -49,7 +46,9 @@ impl WebRTC {
         let onopen_callback = Closure::wrap(Box::new(move |_| {
             log::info!("socket opened");
 
-            let new_user_message = SocketMessage::NewUser { content: from_to.clone() };
+            let new_user_message = SocketMessage::NewUser {
+                content: from_to.clone(),
+            };
             let json_new_user_message = serde_json::to_string(&new_user_message).unwrap();
 
             let send_res = cloned_ws.send_with_str(json_new_user_message.as_ref());
@@ -57,27 +56,23 @@ impl WebRTC {
                 Ok(_) => (),
                 Err(ex) => log::error!("Could not connect to websocket {:?}", ex),
             }
-        }) as Box<dyn FnMut(JsValue)>);
+        }) as BoxDynJsValue);
         ws.set_onopen(Some(onopen_callback.as_ref().unchecked_ref()));
         onopen_callback.forget();
 
         let onclose_callback = Closure::wrap(Box::new(move |_| {
             log::info!("socket closed");
-        }) as Box<dyn FnMut(JsValue)>);
+        }) as BoxDynJsValue);
         ws.set_onclose(Some(onclose_callback.as_ref().unchecked_ref()));
         onclose_callback.forget();
 
         let on_message_callback = Closure::wrap(Box::new(move |message: MessageEvent| {
-            // TODO: Ideally we would like to do that
-            // if let Ok(socket_message) = message.data().into_serde::<SocketMessage>() {
-            //     log::info!("I parsed it correctly: {:?}", socket_message);
-            if let Ok(socket_message) = message.data().dyn_into::<JsString>() {
-                let deser_socket = serde_json::from_str::<SocketMessage>(&String::from(socket_message));
-                log::info!("I parsed it correctly: {:?}", deser_socket);
-            } else {
-                log::error!("Could not parse message data {:?}", message.data());
+            let message = SocketMessage::try_from(message);
+            match message {
+                Ok(parsed) => log::info!("I parsed it correctly: {:?}", parsed),
+                Err(error) => log::error!("Oh No: {:?}", error),
             }
-        }) as Box<dyn FnMut(MessageEvent)>);
+        }) as BoxDynMessageEvent);
         ws.set_onmessage(Some(on_message_callback.as_ref().unchecked_ref()));
         on_message_callback.forget();
 
@@ -91,7 +86,7 @@ impl WebRTC {
         // TODO : 1 Exchanging session descriptions
         //  Create an offer with a SDP
         // let web_rtc_manager_rc_clone = Rc::clone(&web_rtc);
-        // let offer_function: Box<dyn FnMut(JsValue)> = Box::new(move |offer: JsValue| {
+        // let offer_function: BoxDynJsValue = Box::new(move |offer: JsValue| {
         //     // TODO: Error handling : dyn_into seems to not be recognized at runtime.
         //     let offer = offer.unchecked_into::<RtcSessionDescriptionInit>();
 
@@ -104,7 +99,7 @@ impl WebRTC {
         // });
         // let offer_callback = Closure::wrap(offer_function);
 
-        // let exception_function: Box<dyn FnMut(JsValue)> = Box::new(|a: JsValue| {
+        // let exception_function: BoxDynJsValue = Box::new(|a: JsValue| {
         //     log::error!("An error occured during offer creation");
         //     log::error!("{:?}", &a);
         // });
