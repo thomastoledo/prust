@@ -16,7 +16,7 @@ pub enum SocketMessage {
 }
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Room {
-    room: String,
+    pub room: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -24,6 +24,15 @@ pub struct Room {
 pub enum SignalingMessage {
     #[serde(rename = "userHere")]
     UserHere { message: u16 },
+    #[serde(rename = "ice_candidate")]
+    ICECandidate {message : Candidate},
+    #[serde(rename = "SDP")]
+    SDP {message: String}
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Candidate {
+    candidate: String
 }
 
 impl TryFrom<MessageEvent> for SocketMessage {

@@ -23,6 +23,8 @@ features = [
     'RtcConfiguration',
     'RtcPeerConnection',
     'RtcDataChannel',
+    'RtcDataChannelState',
+    'RtcDataChannelInit',
     'RtcIceCandidate',
     'RtcIceServer',
     'RtcSessionDescription',

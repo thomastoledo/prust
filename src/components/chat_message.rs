@@ -32,8 +32,4 @@ impl ChatMessage {
             <p class=format!("message--{}", self.from)>{html! { &self.content.replace("\n", "<br/>")} }</p>
         }
     }
-
-    pub fn network_send(&self) {
-        log::debug!("Sending: {}", self.content);
-    }
 }

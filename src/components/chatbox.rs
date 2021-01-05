@@ -72,7 +72,6 @@ impl Component for ChatBox {
                     </textarea>
                     <input type="button" onclick=self.link.callback(|_| Msg::SendMessage) class="material-icons" value="flight_takeoff"/>
                 </form>
-
             </>
         }
     }

@@ -284,9 +284,17 @@ RAS
 
 # Stream 17
 ## Interstream
-* cargo make concurrency between build / wasm-bind (lol)
+* cargo make concurrence entre build / wasm-bind (lol)
 * cleanup des TODOs
 * améliorer la lisibilité du code (gestion des closures)
 
 ## Plan
 * continuer la gestion des websocket
+
+# Stream 18
+## Interstream
+* Cleanup handle_message function (trop grosse)
+
+## Plan
+* SDP implement
+* Premier message envoyé ?

@@ -39,9 +39,9 @@ impl Component for App {
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
             ActionMessage::OnReceive(value) => {
-                let received_message = ChatMessage::new(SenderType::ME, value);
-                self.chat_messages.push(received_message.clone());
-                received_message.network_send();
+                let received_message = ChatMessage::new(SenderType::ME, value.clone());
+                self.chat_messages.push(received_message);
+                web_rtc::WebRTC::send_message(self.web_rtc.clone(), &value);
             }
             ActionMessage::OnConnect(from_to) => {
                 web_rtc::WebRTC::connect(self.web_rtc.clone(), from_to)
