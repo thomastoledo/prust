@@ -8,20 +8,23 @@ command = "cargo"
 args = ["clean"]
 
 [tasks.dev]
+run_task = [
+    { name = ["build", "wasm-bind"] }
+]
+watch = true
+
+[tasks.build]
 command = "cargo"
-# dependencies = ["wasm-bind"] TODO: Is it possible to have a dependency that watch ?
 args = [
-    "build",
+    "build",    
     "--features=console_error_panic_hook",
     "--target=wasm32-unknown-unknown"
 ]
-watch = true
 
 [tasks.wasm-bind]
 script = [
     "wasm-bindgen --target web --no-typescript --out-dir static/ --out-name app target/wasm32-unknown-unknown/debug/prust.wasm"
 ]
-watch = true
 
 [tasks.serve]
 script = [

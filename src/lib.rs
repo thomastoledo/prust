@@ -9,7 +9,7 @@ use std::rc::Rc;
 use yew::prelude::*;
 
 use components::chat_message::{ChatMessage, SenderType};
-use utils::FromTo;
+use utils::participants::Participants;
 
 pub struct App {
     link: ComponentLink<Self>,
@@ -19,7 +19,7 @@ pub struct App {
 
 pub enum ActionMessage {
     OnReceive(String),
-    OnConnect(FromTo),
+    OnConnect(Participants),
 }
 
 impl Component for App {
@@ -61,7 +61,7 @@ impl Component for App {
             <>
                 <section class="app">
                     <section class="app__connect">
-                        <components::connect::Connect on_connect=self.link.callback(|fromTo: FromTo| ActionMessage::OnConnect(fromTo))></components::connect::Connect>
+                        <components::connect::Connect on_connect=self.link.callback(|fromTo: Participants| ActionMessage::OnConnect(fromTo))></components::connect::Connect>
                     </section>
                     <section class="app__chat">
                         <section class="conversation-container">

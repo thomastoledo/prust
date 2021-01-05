@@ -8,7 +8,7 @@ use web_sys::{
     WebSocket,
 };
 
-use crate::utils::{FromTo, SocketMessage};
+use crate::utils::{participants::Participants, socket::SocketMessage};
 
 type BoxDynJsValue = Box<dyn FnMut(JsValue)>;
 type BoxDynMessageEvent = Box<dyn FnMut(MessageEvent)>;
@@ -27,9 +27,8 @@ impl WebRTC {
 
         let mut configuration = RtcConfiguration::new();
         configuration.ice_servers(&Array::of1(&ice_server));
-        // TODO : Handle exception
-        let peer_connection =
-            RtcPeerConnection::new_with_configuration(&configuration).expect("OUPS");
+        let peer_connection = RtcPeerConnection::new_with_configuration(&configuration)
+            .expect("Cannot create a Peer Connection");
         Self {
             connection: peer_connection,
             callbacks: vec![],
@@ -37,7 +36,7 @@ impl WebRTC {
     }
 
     #[allow(unused_must_use)]
-    pub fn connect(web_rtc: Rc<RefCell<WebRTC>>, from_to: FromTo) {
+    pub fn connect(web_rtc: Rc<RefCell<WebRTC>>, from_to: Participants) {
         let ws = WebSocket::new("wss://glacial-beyond-33808.herokuapp.com").unwrap();
 
         // Is equivalent to onConnect in JS
@@ -75,49 +74,5 @@ impl WebRTC {
         }) as BoxDynMessageEvent);
         ws.set_onmessage(Some(on_message_callback.as_ref().unchecked_ref()));
         on_message_callback.forget();
-
-        // TODO : Handle exception
-        // let _disney_channel = web_rtc
-        //     .borrow_mut()
-        //     .connection
-        //     .create_data_channel("disney_channel");
-        // web_rtc.borrow_mut().connection.peer_identity().then(&closure);
-
-        // TODO : 1 Exchanging session descriptions
-        //  Create an offer with a SDP
-        // let web_rtc_manager_rc_clone = Rc::clone(&web_rtc);
-        // let offer_function: BoxDynJsValue = Box::new(move |offer: JsValue| {
-        //     // TODO: Error handling : dyn_into seems to not be recognized at runtime.
-        //     let offer = offer.unchecked_into::<RtcSessionDescriptionInit>();
-
-        //     log::info!("{:?}", offer);
-        //     // TODO : Add catch handler closure
-        //     web_rtc_manager_rc_clone
-        //         .borrow()
-        //         .connection
-        //         .set_local_description(&offer);
-        // });
-        // let offer_callback = Closure::wrap(offer_function);
-
-        // let exception_function: BoxDynJsValue = Box::new(|a: JsValue| {
-        //     log::error!("An error occured during offer creation");
-        //     log::error!("{:?}", &a);
-        // });
-        // let exception_callback = Closure::wrap(exception_function);
-
-        // let _create_offer_promise = web_rtc
-        //     .borrow_mut()
-        //     .connection
-        //     .create_offer()
-        //     .then(&offer_callback)
-        //     .catch(&exception_callback);
-
-        // // Doing this ties the lifetime of the callback to the lifetime of the WebRtc object
-        // web_rtc.borrow_mut().callbacks.push(offer_callback);
-        // web_rtc.borrow_mut().callbacks.push(exception_callback);
-
-        // TODO 2:  Exchanging ICE candidates
-
-        // TODO 3: Listen SDP offers and send SDP answers
     }
 }

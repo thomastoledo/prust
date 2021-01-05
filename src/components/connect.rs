@@ -2,7 +2,7 @@ use web_sys::HtmlInputElement;
 use yew::prelude::*;
 use yew::Callback;
 
-use crate::utils::FromTo;
+use crate::utils::participants::Participants;
 
 pub struct Connect {
     link: ComponentLink<Self>,
@@ -14,7 +14,7 @@ pub struct Connect {
 
 #[derive(Properties, Clone)]
 pub struct ConnectProps {
-    pub on_connect: Callback<FromTo>,
+    pub on_connect: Callback<Participants>,
 }
 
 pub enum Msg {
@@ -47,7 +47,7 @@ impl Component for Connect {
                     log::debug!("MyName: {}", input_name.value());
                     log::debug!("MyName: {}", other_name.value());
                     // Emit this in lib.rs
-                    self.props.on_connect.emit(FromTo {
+                    self.props.on_connect.emit(Participants {
                         user_from: input_name.value(),
                         user_to: other_name.value(),
                     });
@@ -57,8 +57,6 @@ impl Component for Connect {
                 };
             }
         };
-
-        // TODO: call server for connexion between A & B
         true
     }
 
