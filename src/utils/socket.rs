@@ -9,6 +9,8 @@ use web_sys::MessageEvent;
 pub enum SocketMessage {
     #[serde(rename = "newUser")]
     NewUser { content: Participants },
+    #[serde(rename = "signal_message_from_client")]
+    SignalMessageFromClient { content: SignalingMessage },
     #[serde(rename = "signal_message_to_client")]
     SignalMessageToClient { content: SignalingMessage },
     #[serde(rename = "joined_room")]
@@ -25,14 +27,14 @@ pub enum SignalingMessage {
     #[serde(rename = "userHere")]
     UserHere { message: u16 },
     #[serde(rename = "ice_candidate")]
-    ICECandidate {message : Candidate},
+    ICECandidate { message: Candidate },
     #[serde(rename = "SDP")]
-    SDP {message: String}
+    SDP { message: String },
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Candidate {
-    candidate: String
+    pub candidate: String,
 }
 
 impl TryFrom<MessageEvent> for SocketMessage {

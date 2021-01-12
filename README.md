@@ -292,9 +292,23 @@ RAS
 * continuer la gestion des websocket
 
 # Stream 18
-## Interstream
-* Cleanup handle_message function (trop grosse)
 
 ## Plan
 * SDP implement
+* Premier message envoyé ?
+
+## Réalisation
+* Cleanup handle_message function (trop grosse)
+* Ajout de nouveau handlers
+* Prise en compte de callbacks WebRTC:
+* * `on_ice_candidate_callback`
+* * `on_signaling_callback`
+
+# Stream 19
+
+## Plan
+* Raffraîchissement [WebRTC](https://media.prod.mdn.mozit.cloud/attachments/2016/01/27/12363/9d667775214ae0422fae606050f60c1e/WebRTC%20-%20Signaling%20Diagram.svg)
+* Prise en compte de callbacks WebRTC:
+* * `on_negociation_needed`
+* Faire l'implémentation de `handle_sdp_message`
 * Premier message envoyé ?
