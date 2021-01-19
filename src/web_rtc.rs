@@ -5,8 +5,9 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use web_sys::{
     MessageEvent, RtcConfiguration, RtcDataChannel, RtcDataChannelInit, RtcDataChannelState,
-    RtcIceCandidate, RtcIceCandidateInit, RtcIceServer, RtcPeerConnection,
-    RtcPeerConnectionIceEvent, RtcSessionDescription, RtcSignalingState, WebSocket,
+    RtcIceCandidateInit, RtcIceServer, RtcPeerConnection,
+    RtcPeerConnectionIceEvent, RtcSessionDescription, RtcSessionDescriptionInit,
+    RtcSignalingState, WebSocket,
 };
 
 use crate::utils::{
@@ -55,7 +56,6 @@ impl WebRTC {
     pub fn connect(web_rtc: Rc<RefCell<WebRTC>>, from_to: Participants) {
         let ws = WebSocket::new("wss://glacial-beyond-33808.herokuapp.com").unwrap();
 
-        // let _ = ws.clone();
         let cloned_ws = ws.clone();
         // Is equivalent to onConnect in JS
         let onopen_callback = Closure::wrap(Box::new(move |_| {
@@ -92,10 +92,11 @@ impl WebRTC {
         ws.set_onmessage(Some(on_message_callback.as_ref().unchecked_ref()));
         on_message_callback.forget();
 
+        let cloned_ws = ws.clone();
         let on_ice_candidate_callback =
             Closure::wrap(Box::new(move |event: RtcPeerConnectionIceEvent| {
                 log::info!("on ice candidate callback");
-                if event.candidate().is_none() {
+                if event.candidate().is_some() {
                     let signal_message_from_client = SocketMessage::SignalMessageFromClient {
                         content: SignalingMessage::ICECandidate {
                             message: Candidate {
@@ -103,8 +104,6 @@ impl WebRTC {
                             },
                         },
                     };
-
-                    let cloned_ws = ws.clone();
 
                     let json_from_client_message =
                         serde_json::to_string(&signal_message_from_client).unwrap();
@@ -118,59 +117,78 @@ impl WebRTC {
         let webrtc_signaling_clone = web_rtc.clone();
         let on_signaling_callback = Closure::wrap(Box::new(move |_: MessageEvent| {
             let mut borrowed_web_rtc = webrtc_signaling_clone.borrow_mut();
-            let new_value = borrowed_web_rtc.connection.signaling_state() == RtcSignalingState::Stable;
+            let new_value =
+                borrowed_web_rtc.connection.signaling_state() == RtcSignalingState::Stable;
             borrowed_web_rtc.set_is_negotiating(new_value);
             log::info!("signaling state change");
         }) as BoxDynMessageEvent);
 
+        let webrtc_negotation_need_clone = web_rtc.clone();
+        let more_clone = web_rtc.clone();
 
-        // let webrtc_negotiation_need
+        let cloned_ws = ws.clone();
+        let my_cloned_webrtc = web_rtc.clone();
+        let send_sdp_callback = Closure::wrap(Box::new(move |_: JsValue| {
+            let message_to_send = SocketMessage::SignalMessageFromClient {
+                content: SignalingMessage::SDP {
+                    message: my_cloned_webrtc
+                        .borrow_mut()
+                        .connection
+                        .local_description()
+                        .unwrap()
+                        .sdp(),
+                },
+            };
+            let message_to_send = serde_json::to_string(&message_to_send).unwrap();
+            cloned_ws.send_with_str(&message_to_send);
+        }) as BoxDynEvent<JsValue>);
 
-        // function onNegotiationNeeded() {
-        //     if (isNegotiating) {
-        //         return;
-        //     }
-        //     isNegotiating = true;
-        //     rtcPeerConn.createOffer()
-        //         .then(sendLocalDesc)
-        //         .catch(logError);
-        // }
+        let negociation_success_callback = Closure::wrap(Box::new(move |descriptor: JsValue| {
+            let description_init = RtcSessionDescriptionInit::try_from(descriptor).unwrap();
+            more_clone
+                .borrow_mut()
+                .connection
+                .set_local_description(&description_init)
+                .then(&send_sdp_callback);
+        }) as BoxDynEvent<JsValue>);
 
-        // function sendLocalDesc(descriptor) {
-        //     rtcPeerConn.setLocalDescription(descriptor, function() {
-        //         socket.send(prepareMsg({type: TYPES.SIGNAL_MESSAGE_FROM_CLIENT, content: {signalType: SIGNAL_TYPES.SDP, message: JSON.stringify({sdp: rtcPeerConn.localDescription})}}));
-        //     }, logError);
-        // }    
-        
+        let on_negociation_needed_callback = Closure::wrap(Box::new(move |event: JsValue| {
+            let mut borrowed_web_rtc = webrtc_negotation_need_clone.borrow_mut();
+            if !borrowed_web_rtc.is_negotiating {
+                borrowed_web_rtc.is_negotiating = true;
+
+                let print_error_callback =
+                    Closure::wrap(Box::new(|err| log::error!("{:?}", err)) as BoxDynJsValue);
+                borrowed_web_rtc
+                    .connection
+                    .create_offer()
+                    .then(&negociation_success_callback)
+                    .catch(&print_error_callback);
+
+                // TODO: Do we need to forget ?
+                // TODO no, we must live with our memories
+                // send_sdp_callback.forget();
+                // print_error_callback.forget();
+                // negociation_success_callback.forget();
+            }
+        }) as BoxDynJsValue);
 
         let web_rtc_borrowed = web_rtc.borrow_mut();
 
         web_rtc_borrowed
             .connection
             .set_onicecandidate(Some(on_ice_candidate_callback.as_ref().unchecked_ref()));
+        on_ice_candidate_callback.forget();
 
         web_rtc_borrowed
             .connection
             .set_onsignalingstatechange(Some(on_signaling_callback.as_ref().unchecked_ref()));
+        on_signaling_callback.forget();
 
-        // web_rtc_borrowed
-        //      .connection
-        //      .set_onnegotiationneeded();
-        
-        /*
-
-        function onNegotiationNeeded() {
-            if (isNegotiating) {
-                return;
-            }
-            isNegotiating = true;
-            rtcPeerConn.createOffer()
-                .then(sendLocalDesc)
-                .catch(logError);
-        }
-
-
-                 */
+        web_rtc_borrowed.connection.set_onnegotiationneeded(Some(
+            on_negociation_needed_callback.as_ref().unchecked_ref(),
+        ));
+        on_negociation_needed_callback.forget();
     }
 
     pub fn send_message(web_rtc: Rc<RefCell<WebRTC>>, message: &str) {
@@ -204,7 +222,6 @@ impl WebRTC {
             SocketMessage::SignalMessageToClient {
                 content: SignalingMessage::SDP { message },
             } => {
-                log::info!("SDP message: {:?}", message);
                 WebRTC::handle_sdp_message(web_rtc, &message);
             }
             SocketMessage::SignalMessageFromClient { content } => {}
@@ -248,14 +265,13 @@ impl WebRTC {
 
     #[allow(unused)]
     fn handle_ice_candidate(web_rtc: Rc<RefCell<WebRTC>>, candidate: Candidate) {
-        let peer_connection = &(*web_rtc.borrow_mut()).connection;
+        let mut borrow_mut = web_rtc.borrow_mut();
+        let peer_connection = &borrow_mut.connection;
         let remote_description: Option<RtcSessionDescription> =
             peer_connection.remote_description();
         if remote_description.is_none() {
             let candidate_init = RtcIceCandidateInit::new(&candidate.candidate);
-            (*web_rtc.borrow_mut())
-                .candidates_buffer
-                .push(candidate_init);
+            (borrow_mut).candidates_buffer.push(candidate_init);
         } else {
             let candidate_init = RtcIceCandidateInit::new(&candidate.candidate);
             let print_error_callback =
@@ -273,7 +289,40 @@ impl WebRTC {
     }
 
     fn handle_sdp_message(web_rtc: Rc<RefCell<WebRTC>>, sdp: &str) {
-        log::info!("Received sdp {:?}", sdp);
+        let description_init = RtcSessionDescriptionInit::from(JsValue::from_str(sdp));
+        let clone = web_rtc.clone();
+
+        // TODO - TTO: refactor
+        let send_sdp_callback = Closure::wrap(Box::new(move |_: JsValue| {
+            let borrow_mut = clone.borrow_mut();
+            let message_to_send = SocketMessage::SignalMessageFromClient {
+                content: SignalingMessage::SDP {
+                    message: borrow_mut.connection.local_description().unwrap().sdp(),
+                },
+            };
+            let message_to_send = serde_json::to_string(&message_to_send).unwrap();
+            // TODO: Set the socket in WebRTC object to keep the socket alive
+            // cloned_ws.send_with_str(&message_to_send);
+        }) as BoxDynEvent<JsValue>);
+
+        let remote_description_success_callback = Closure::wrap(Box::new(|_: JsValue| {
+            // if borrow_mut.connection.remote_description().unwrap().type_() == RtcSdpType::Offer {
+            // borrow_mut
+            //     .connection
+            //     .create_answer()
+            //     .then(&send_sdp_callback);
+            // };
+        }) as BoxDynEvent<JsValue>);
+        let print_error_callback =
+            Closure::wrap(Box::new(|err| log::error!("{:?}", err)) as BoxDynJsValue);
+
+        let clone_2 = web_rtc.clone();
+        let borrow_mut_2 = clone_2.borrow_mut();
+        borrow_mut_2
+            .connection
+            .set_remote_description(&description_init)
+            .then(&remote_description_success_callback)
+            .catch(&print_error_callback);
     }
 }
 
@@ -286,12 +335,6 @@ impl WebRTC {
 //         }
 //         sendQueuedCandidates();
 //     }).catch(logError);
-// }
-
-// function sendLocalDesc(descriptor) {
-//     rtcPeerConn.setLocalDescription(descriptor, function() {
-//         socket.send(prepareMsg({type: TYPES.SIGNAL_MESSAGE_FROM_CLIENT, content: {signalType: SIGNAL_TYPES.SDP, message: JSON.stringify({sdp: rtcPeerConn.localDescription})}}));
-//     }, logError);
 // }
 
 // function sendQueuedCandidates() {

@@ -312,3 +312,12 @@ RAS
 * * `on_negociation_needed`
 * Faire l'implémentation de `handle_sdp_message`
 * Premier message envoyé ?
+
+## Réalisation
+* on_negotiation_needed : OK
+* start handle_sdp_message : ONGOING
+
+# Stream 20
+## Plan
+* Terminer l'implémentation de `handle_sdp_message`
+* Premier message envoyé ?
