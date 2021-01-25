@@ -44,8 +44,8 @@ impl Component for Connect {
                     self.my_name.cast::<HtmlInputElement>(),
                     self.other_name.cast::<HtmlInputElement>(),
                 ) {
-                    log::debug!("MyName: {}", input_name.value());
-                    log::debug!("MyName: {}", other_name.value());
+                    log::debug!("My name: {}", input_name.value());
+                    log::debug!("Peer name: {}", other_name.value());
                     // Emit this in lib.rs
                     self.props.on_connect.emit(Participants {
                         user_from: input_name.value(),

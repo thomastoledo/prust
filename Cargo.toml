@@ -12,6 +12,10 @@ serde = '1.0'
 serde_json = '1.0.55'
 yew = '0.15'
 js-sys = '0.3.40'
+futures = "0.3"
+
+# Do we need this lines ?
+wasm-bindgen-futures = "0.4.19"
 
 console_error_panic_hook = { version = '0.1.1', optional = true }
 

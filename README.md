@@ -305,7 +305,6 @@ RAS
 * * `on_signaling_callback`
 
 # Stream 19
-
 ## Plan
 * Raffraîchissement [WebRTC](https://media.prod.mdn.mozit.cloud/attachments/2016/01/27/12363/9d667775214ae0422fae606050f60c1e/WebRTC%20-%20Signaling%20Diagram.svg)
 * Prise en compte de callbacks WebRTC:
@@ -321,3 +320,13 @@ RAS
 ## Plan
 * Terminer l'implémentation de `handle_sdp_message`
 * Premier message envoyé ?
+
+## Réalisation
+* handle_sdp_message = quasi OK
+* problème référence socket :(
+
+# Stream 21
+## Interstream :cow:
+* Fix sockets ? OK !
+* block_on: NOP NOP NOP
+* Problème avec borrow_mut T_T => OK !

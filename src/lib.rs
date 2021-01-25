@@ -4,8 +4,8 @@ mod components;
 mod utils;
 mod web_rtc;
 
-use std::cell::RefCell;
-use std::rc::Rc;
+use std::{cell::RefCell, rc::Rc};
+use web_rtc::WebRTC;
 use yew::prelude::*;
 
 use components::chat_message::{ChatMessage, SenderType};
@@ -14,7 +14,7 @@ use utils::participants::Participants;
 pub struct App {
     link: ComponentLink<Self>,
     chat_messages: Vec<ChatMessage>,
-    web_rtc: Rc<RefCell<web_rtc::WebRTC>>,
+    web_rtc: Rc<RefCell<WebRTC>>,
 }
 
 pub enum ActionMessage {
