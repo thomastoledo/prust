@@ -330,3 +330,15 @@ RAS
 * Fix sockets ? OK !
 * block_on: NOP NOP NOP
 * Problème avec borrow_mut T_T => OK !
+
+## Réalisation
+* Correction de la perte de types du RTCSessionDescription 
+    * (mapping serde)
+    * Trait TryFrom
+* Définition de l'expression "sur des chapeaux de roues"
+
+# Stream 22
+## Plan
+* ICE candidates:
+    * https://media.prod.mdn.mozit.cloud/attachments/2016/01/27/12365/b5bcd9ecac08ae0bc89b6a3e08cfe93c/WebRTC%20-%20ICE%20Candidate%20Exchange.svg 
+    * Faire le mapper pour les ICECandidates (on perd des informations)

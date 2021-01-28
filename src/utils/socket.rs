@@ -1,8 +1,8 @@
-use std::convert::TryFrom;
+use std::{convert::TryFrom, fmt::Debug};
 
 use crate::Participants;
 use serde::{Deserialize, Serialize};
-use web_sys::MessageEvent;
+use web_sys::{MessageEvent, RtcSdpType, RtcSessionDescription, RtcSessionDescriptionInit};
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "type")]
@@ -29,7 +29,57 @@ pub enum SignalingMessage {
     #[serde(rename = "ice_candidate")]
     ICECandidate { message: Candidate },
     #[serde(rename = "SDP")]
-    SDP { message: String },
+    SDP { message: SDPMessage },
+}
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SDPMessage {
+    pub type_: String,
+    pub sdp: String,
+}
+
+impl TryFrom<RtcSessionDescription> for SDPMessage {
+    type Error = CustomError;
+
+    fn try_from(value: RtcSessionDescription) -> Result<Self, Self::Error> {
+        // TODO: This mapping looks fishy, improve this.
+        let type_ = match value.type_() {
+            RtcSdpType::Answer => "answer",
+            RtcSdpType::Offer => "offer",
+            RtcSdpType::Pranswer => "pranswer",
+            RtcSdpType::Rollback => "rollback",
+            _ => {
+                return Result::Err(CustomError::InputTypeError(String::from(
+                    "Unknown SDP type",
+                )))
+            }
+        };
+        Ok(SDPMessage {
+            type_: String::from(type_),
+            sdp: String::from(value.sdp()),
+        })
+    }
+}
+
+impl TryFrom<SDPMessage> for RtcSessionDescriptionInit {
+    type Error = CustomError;
+
+    fn try_from(value: SDPMessage) -> Result<Self, Self::Error> {
+        // TODO: This mapping looks fishy, improve this.
+        let type_ = match value.type_.as_str() {
+            "answer" => RtcSdpType::Answer,
+            "offer" => RtcSdpType::Offer,
+            "pranswer" => RtcSdpType::Pranswer,
+            "rollback" => RtcSdpType::Rollback,
+            _ => {
+                return Result::Err(CustomError::InputTypeError(String::from(
+                    "SDP type not found",
+                )))
+            }
+        };
+        let mut res = RtcSessionDescriptionInit::new(type_);
+        res.sdp(&value.sdp);
+        Ok(res)
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]

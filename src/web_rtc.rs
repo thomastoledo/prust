@@ -11,7 +11,7 @@ use web_sys::{
 
 use crate::utils::{
     participants::Participants,
-    socket::{Candidate, Room, SignalingMessage, SocketMessage},
+    socket::{Candidate, Room, SDPMessage, SignalingMessage, SocketMessage},
 };
 
 type BoxDynJsValue = Box<dyn FnMut(JsValue)>;
@@ -131,19 +131,24 @@ impl WebRTC {
 
         let sdp_clone = web_rtc.clone();
         let send_sdp_callback = Closure::wrap(Box::new(move |_: JsValue| {
+            let session_description = sdp_clone
+                .as_ref()
+                .borrow()
+                .connection
+                .local_description()
+                .unwrap();
             let message_to_send = SocketMessage::SignalMessageFromClient {
                 content: SignalingMessage::SDP {
-                    message: sdp_clone
-                        .as_ref()
-                        .borrow()
-                        .connection
-                        .local_description()
-                        .unwrap()
-                        .sdp(),
+                    message: SDPMessage::try_from(session_description).unwrap(),
                 },
             };
             let message_to_send = serde_json::to_string(&message_to_send).unwrap();
-            match sdp_clone.as_ref().borrow().socket.send_with_str(&message_to_send) {
+            match sdp_clone
+                .as_ref()
+                .borrow()
+                .socket
+                .send_with_str(&message_to_send)
+            {
                 Ok(_) => log::info!("Successfully handle sdp callback"),
                 Err(err) => log::error!("Error in sdp callback {:?}", err),
             };
@@ -191,9 +196,13 @@ impl WebRTC {
                 .set_onsignalingstatechange(Some(on_signaling_callback.as_ref().unchecked_ref()));
             on_signaling_callback.forget();
 
-            web_rtc.as_ref().borrow().connection.set_onnegotiationneeded(Some(
-                on_negociation_needed_callback.as_ref().unchecked_ref(),
-            ));
+            web_rtc
+                .as_ref()
+                .borrow()
+                .connection
+                .set_onnegotiationneeded(Some(
+                    on_negociation_needed_callback.as_ref().unchecked_ref(),
+                ));
             on_negociation_needed_callback.forget();
 
             // Send message in socket
@@ -243,7 +252,7 @@ impl WebRTC {
             SocketMessage::SignalMessageToClient {
                 content: SignalingMessage::SDP { message },
             } => {
-                WebRTC::handle_sdp_message(web_rtc, &message);
+                WebRTC::handle_sdp_message(web_rtc, message);
             }
             SocketMessage::SignalMessageFromClient { .. } => {}
         }
@@ -298,17 +307,22 @@ impl WebRTC {
             borrowed.connection.remote_description();
         if remote_description.is_none() {
             log::info!("Remote description is none");
+            // TODO: When we init a candidate, we need to set sdp_m_line_index and sdp_mid
+            // See what's done with RTCSessionDescriptionInit
             let candidate_init = RtcIceCandidateInit::new(&candidate.candidate);
             borrowed.candidates_buffer.push(candidate_init);
             log::info!("Remote description is DONE");
         } else {
             log::info!("Remote description is some");
+            // TODO: When we init a candidate, we need to set sdp_m_line_index and sdp_mid
+            // See what's done with RTCSessionDescriptionInit
             let candidate_init = RtcIceCandidateInit::new(&candidate.candidate);
+            log::error!("{:?}", &candidate_init);
             let print_error_callback = Closure::wrap(Box::new(|err| {
-                log::error!("remote description is some - error{:?}", err)
+                log::error!("remote description is some - error {:?}", err)
             }) as BoxDynJsValue);
             let print_success_callback = Closure::wrap(Box::new(|success| {
-                log::info!("remote description is some - success{:?}", success)
+                log::info!("remote description is some - success {:?}", success)
             }) as BoxDynJsValue);
 
             let _ = borrowed
@@ -321,22 +335,30 @@ impl WebRTC {
         }
     }
 
-    fn handle_sdp_message(web_rtc: Rc<RefCell<WebRTC>>, sdp: &str) {
-        let description_init = RtcSessionDescriptionInit::from(JsValue::from_str(sdp));
+    fn handle_sdp_message(web_rtc: Rc<RefCell<WebRTC>>, sdp_message: SDPMessage) {
+        let description_init =
+            RtcSessionDescriptionInit::try_from(sdp_message).expect("THIS IS NOT WELL FORMED !");
+        // let description_init = RtcSessionDescriptionInit::new(RtcSdpType::Offer);
+        // let description_init = description_init.sdp(sdp);
+        //  JsValue::from_str(sdp)
+        log::info!("{:?}", &description_init);
         let clone = web_rtc.clone();
 
         let send_sdp_callback = Closure::wrap(Box::new(move |_: JsValue| {
             let borrow_mut = clone.borrow_mut();
             let message_to_send = SocketMessage::SignalMessageFromClient {
                 content: SignalingMessage::SDP {
-                    message: borrow_mut.connection.local_description().unwrap().sdp(),
+                    message: SDPMessage::try_from(
+                        borrow_mut.connection.local_description().unwrap(),
+                    )
+                    .unwrap(),
                 },
             };
             let message_to_send = serde_json::to_string(&message_to_send).unwrap();
             // TODO: Set the socket in WebRTC object to keep the socket alive
             match borrow_mut.socket.send_with_str(&message_to_send) {
-                    Ok(_) => log::info!("binary message successfully sent"),
-                    Err(err) => log::error!("error sending message: {:?}", err),
+                Ok(_) => log::info!("binary message successfully sent"),
+                Err(err) => log::error!("error sending message: {:?}", err),
             }
         }) as BoxDynEvent<JsValue>);
 
@@ -352,19 +374,23 @@ impl WebRTC {
                 == RtcSdpType::Offer
             {
                 let _ = clone_remote_description_success
-                        .as_ref()
-                        .borrow()
-                        .connection
-                        .create_answer()
-                        .then(&send_sdp_callback);
+                    .as_ref()
+                    .borrow()
+                    .connection
+                    .create_answer()
+                    .then(&send_sdp_callback);
             }
             // send Queued Candidates
-            for candidate in &clone_remote_description_success.as_ref().borrow().candidates_buffer {
-                    let _ = clone_remote_description_success
-                        .as_ref()
-                        .borrow()
-                        .connection
-                        .add_ice_candidate_with_opt_rtc_ice_candidate_init(Some(&candidate));
+            for candidate in &clone_remote_description_success
+                .as_ref()
+                .borrow()
+                .candidates_buffer
+            {
+                let _ = clone_remote_description_success
+                    .as_ref()
+                    .borrow()
+                    .connection
+                    .add_ice_candidate_with_opt_rtc_ice_candidate_init(Some(&candidate));
                 log::info!("candidate unqueuing success");
             }
         }) as BoxDynEvent<JsValue>);
