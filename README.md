@@ -340,5 +340,18 @@ RAS
 # Stream 22
 ## Plan
 * ICE candidates:
-    * https://media.prod.mdn.mozit.cloud/attachments/2016/01/27/12365/b5bcd9ecac08ae0bc89b6a3e08cfe93c/WebRTC%20-%20ICE%20Candidate%20Exchange.svg 
+    * https://media.prod.mdn.mozit.cloud/attachments/2016/01/27/12365/b5bcd9ecac08ae0bc89b6a3e08cfe93c/WebRTC%20-%20ICE%20Candidate%20Exchange.svg
     * Faire le mapper pour les ICECandidates (on perd des informations)
+
+## Réalisations
+* Ça fucking marche !
+* Merci la vie.
+
+# Stream 23
+## Interstream
+* Annoter les étapes ICE
+* Cleanup serde-serialize quand possible
+
+## Plan
+* Display du message dans la chatbox
+* Présentation du prochain projet

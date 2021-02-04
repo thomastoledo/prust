@@ -32,7 +32,7 @@ pub struct WebRTC {
 impl WebRTC {
     pub fn new() -> Self {
         let mut ice_server = RtcIceServer::new();
-        ice_server.urls(&JsValue::from_str("stun:stun.services.mozilla.com"));
+        ice_server.urls(&JsValue::from_str("stun:stun.l.google.com:19302"));
 
         let mut configuration = RtcConfiguration::new();
         configuration.ice_servers(&Array::of1(&ice_server));
@@ -92,25 +92,29 @@ impl WebRTC {
         let on_ice_cloned = web_rtc.clone();
         let on_ice_candidate_callback =
             Closure::wrap(Box::new(move |event: RtcPeerConnectionIceEvent| {
-                log::info!("on ice candidate callback");
-                if event.candidate().is_some() {
-                    let signal_message_from_client = SocketMessage::SignalMessageFromClient {
-                        content: SignalingMessage::ICECandidate {
-                            message: Candidate {
-                                candidate: event.candidate().unwrap().candidate(),
+                log::info!("ICE 1: Send ice_candidate to signaling server");
+                if let Some(candidate) = event.candidate() {
+                    if !candidate.candidate().is_empty() {
+                        let signal_message_from_client = SocketMessage::SignalMessageFromClient {
+                            content: SignalingMessage::ICECandidate {
+                                message: Candidate {
+                                    candidate: candidate.candidate(),
+                                    sdp_mid: candidate.sdp_mid().unwrap(),
+                                    sdp_m_line_index: candidate.sdp_m_line_index().unwrap(),
+                                },
                             },
-                        },
-                    };
+                        };
 
-                    let json_from_client_message =
-                        serde_json::to_string(&signal_message_from_client).unwrap();
-                    let send_res = on_ice_cloned
-                        .as_ref()
-                        .borrow()
-                        .socket
-                        .send_with_str(json_from_client_message.as_ref());
-                    if let Err(ex) = send_res {
-                        log::error!("Could not execute ice candidate callback {:?}", ex)
+                        let json_from_client_message =
+                            serde_json::to_string(&signal_message_from_client).unwrap();
+                        let send_res = on_ice_cloned
+                            .as_ref()
+                            .borrow()
+                            .socket
+                            .send_with_str(json_from_client_message.as_ref());
+                        if let Err(ex) = send_res {
+                            log::error!("Could not execute ice candidate callback {:?}", ex)
+                        }
                     }
                 }
             }) as BoxDynEvent<RtcPeerConnectionIceEvent>);
@@ -126,11 +130,11 @@ impl WebRTC {
                 .as_ref()
                 .borrow_mut()
                 .set_is_negotiating(new_value);
-            log::info!("signaling state change");
         }) as BoxDynMessageEvent);
 
         let sdp_clone = web_rtc.clone();
         let send_sdp_callback = Closure::wrap(Box::new(move |_: JsValue| {
+            log::info!("Step 3: On negociation needed, send offer to signaling server");
             let session_description = sdp_clone
                 .as_ref()
                 .borrow()
@@ -149,13 +153,14 @@ impl WebRTC {
                 .socket
                 .send_with_str(&message_to_send)
             {
-                Ok(_) => log::info!("Successfully handle sdp callback"),
+                Ok(_) => (),
                 Err(err) => log::error!("Error in sdp callback {:?}", err),
             };
         }) as BoxDynEvent<JsValue>);
 
         let on_negociation_success_clone = web_rtc.clone();
         let negociation_success_callback = Closure::wrap(Box::new(move |descriptor: JsValue| {
+            log::info!("Step 2: On negociation needed, set_local_description");
             let description_init = RtcSessionDescriptionInit::try_from(descriptor).unwrap();
             let _ = on_negociation_success_clone
                 .as_ref()
@@ -169,6 +174,7 @@ impl WebRTC {
         let on_negociation_needed_callback = Closure::wrap(Box::new(move |_: JsValue| {
             let mut borrow_mut = on_negociation_needed_clone.as_ref().borrow_mut();
             if !borrow_mut.is_negotiating {
+                log::info!("Step 1: On negociation needed, create offer");
                 borrow_mut.set_is_negotiating(true);
 
                 let print_error_callback =
@@ -226,7 +232,7 @@ impl WebRTC {
         if let Some(data_channel) = &web_rtc.as_ref().borrow().data_channel {
             if data_channel.ready_state() == RtcDataChannelState::Open {
                 match data_channel.send_with_str(message) {
-                    Ok(_) => log::info!("Message sent"),
+                    Ok(_) => (),
                     Err(err) => log::error!("Could not send message {:?}", err),
                 }
             }
@@ -259,17 +265,14 @@ impl WebRTC {
     }
 
     fn join_room(web_rtc: Rc<RefCell<WebRTC>>, content: Room) {
-        log::info!("JoinedRoom message: {:?}", &content.room);
         (*web_rtc.as_ref().borrow_mut()).room = Some(content.room.clone());
     }
 
     fn handle_user_here(web_rtc: Rc<RefCell<WebRTC>>, signaling_id: u16) {
-        log::info!("Signaling message: {:?}", signaling_id);
         let cloned_web_rtc = web_rtc.clone();
         let mut borrow_mut = cloned_web_rtc.as_ref().borrow_mut();
         if !borrow_mut.signaling_channel_opened {
             let current_room = &borrow_mut.room;
-            // TODO: Mutability not required if we can chain method calls
             let mut data_channel_init = RtcDataChannelInit::new();
             data_channel_init.negotiated(true);
             data_channel_init.id(signaling_id);
@@ -299,31 +302,25 @@ impl WebRTC {
     }
 
     fn handle_ice_candidate(web_rtc: Rc<RefCell<WebRTC>>, candidate: Candidate) {
-        log::info!("Handle ice candidate start");
         let cloned_web_rtc = web_rtc.clone();
 
         let mut borrowed = cloned_web_rtc.as_ref().borrow_mut();
         let remote_description: Option<RtcSessionDescription> =
             borrowed.connection.remote_description();
+
         if remote_description.is_none() {
-            log::info!("Remote description is none");
-            // TODO: When we init a candidate, we need to set sdp_m_line_index and sdp_mid
-            // See what's done with RTCSessionDescriptionInit
-            let candidate_init = RtcIceCandidateInit::new(&candidate.candidate);
+            let mut candidate_init = RtcIceCandidateInit::new(&candidate.candidate);
+            candidate_init.sdp_m_line_index(Some(candidate.sdp_m_line_index));
+            candidate_init.sdp_mid(Some(&candidate.sdp_mid));
             borrowed.candidates_buffer.push(candidate_init);
-            log::info!("Remote description is DONE");
         } else {
-            log::info!("Remote description is some");
-            // TODO: When we init a candidate, we need to set sdp_m_line_index and sdp_mid
-            // See what's done with RTCSessionDescriptionInit
-            let candidate_init = RtcIceCandidateInit::new(&candidate.candidate);
-            log::error!("{:?}", &candidate_init);
+            let mut candidate_init = RtcIceCandidateInit::new(&candidate.candidate);
+            candidate_init.sdp_m_line_index(Some(candidate.sdp_m_line_index));
+            candidate_init.sdp_mid(Some(&candidate.sdp_mid));
             let print_error_callback = Closure::wrap(Box::new(|err| {
-                log::error!("remote description is some - error {:?}", err)
+                log::error!("remote description {:?}", err)
             }) as BoxDynJsValue);
-            let print_success_callback = Closure::wrap(Box::new(|success| {
-                log::info!("remote description is some - success {:?}", success)
-            }) as BoxDynJsValue);
+            let print_success_callback = Closure::wrap(Box::new(|_| {}) as BoxDynJsValue);
 
             let _ = borrowed
                 .connection
@@ -336,15 +333,11 @@ impl WebRTC {
     }
 
     fn handle_sdp_message(web_rtc: Rc<RefCell<WebRTC>>, sdp_message: SDPMessage) {
-        let description_init =
-            RtcSessionDescriptionInit::try_from(sdp_message).expect("THIS IS NOT WELL FORMED !");
-        // let description_init = RtcSessionDescriptionInit::new(RtcSdpType::Offer);
-        // let description_init = description_init.sdp(sdp);
-        //  JsValue::from_str(sdp)
-        log::info!("{:?}", &description_init);
+        let description_init = RtcSessionDescriptionInit::try_from(sdp_message).unwrap();
         let clone = web_rtc.clone();
 
         let send_sdp_callback = Closure::wrap(Box::new(move |_: JsValue| {
+            log::info!("Step 7: Handle SDP, send SDP answer");
             let borrow_mut = clone.borrow_mut();
             let message_to_send = SocketMessage::SignalMessageFromClient {
                 content: SignalingMessage::SDP {
@@ -355,11 +348,23 @@ impl WebRTC {
                 },
             };
             let message_to_send = serde_json::to_string(&message_to_send).unwrap();
-            // TODO: Set the socket in WebRTC object to keep the socket alive
             match borrow_mut.socket.send_with_str(&message_to_send) {
                 Ok(_) => log::info!("binary message successfully sent"),
                 Err(err) => log::error!("error sending message: {:?}", err),
             }
+        }) as BoxDynEvent<JsValue>);
+
+        let set_local_clone = web_rtc.clone();
+        let set_local_description_callback = Closure::wrap(Box::new(move |descriptor: JsValue| {
+            let sdp_message = descriptor.into_serde::<SDPMessage>().unwrap();
+            let session_description_init =
+                RtcSessionDescriptionInit::try_from(sdp_message).unwrap();
+            let _ = set_local_clone
+                .borrow()
+                .connection
+                .set_local_description(&session_description_init)
+                .then(&send_sdp_callback);
+            log::info!("Step 6: Handle SDP, set_local_description");
         }) as BoxDynEvent<JsValue>);
 
         let clone_remote_description_success = web_rtc.clone();
@@ -373,12 +378,13 @@ impl WebRTC {
                 .type_()
                 == RtcSdpType::Offer
             {
+                log::info!("Step 5: Handle SDP, create_answer");
                 let _ = clone_remote_description_success
                     .as_ref()
                     .borrow()
                     .connection
                     .create_answer()
-                    .then(&send_sdp_callback);
+                    .then(&set_local_description_callback);
             }
             // send Queued Candidates
             for candidate in &clone_remote_description_success
@@ -391,10 +397,10 @@ impl WebRTC {
                     .borrow()
                     .connection
                     .add_ice_candidate_with_opt_rtc_ice_candidate_init(Some(&candidate));
-                log::info!("candidate unqueuing success");
             }
         }) as BoxDynEvent<JsValue>);
 
+        log::info!("Step 4: Handle SDP, set_remote_description");
         let clone_2 = web_rtc.clone();
         let _ = clone_2
             .as_ref()
@@ -402,5 +408,6 @@ impl WebRTC {
             .connection
             .set_remote_description(&description_init)
             .then(&remote_description_success_callback);
+        remote_description_success_callback.forget();
     }
 }

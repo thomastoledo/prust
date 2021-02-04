@@ -16,6 +16,7 @@ pub enum SocketMessage {
     #[serde(rename = "joined_room")]
     JoinedRoom { content: Room },
 }
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Room {
     pub room: String,
@@ -31,8 +32,10 @@ pub enum SignalingMessage {
     #[serde(rename = "SDP")]
     SDP { message: SDPMessage },
 }
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SDPMessage {
+    #[serde(rename = "type")]
     pub type_: String,
     pub sdp: String,
 }
@@ -73,7 +76,7 @@ impl TryFrom<SDPMessage> for RtcSessionDescriptionInit {
             _ => {
                 return Result::Err(CustomError::InputTypeError(String::from(
                     "SDP type not found",
-                )))
+                )));
             }
         };
         let mut res = RtcSessionDescriptionInit::new(type_);
@@ -85,6 +88,8 @@ impl TryFrom<SDPMessage> for RtcSessionDescriptionInit {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Candidate {
     pub candidate: String,
+    pub sdp_mid: String,
+    pub sdp_m_line_index: u16,
 }
 
 impl TryFrom<MessageEvent> for SocketMessage {
