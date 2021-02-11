@@ -347,11 +347,26 @@ RAS
 * Ça fucking marche !
 * Merci la vie.
 
-# Stream 23
-## Interstream
-* Annoter les étapes ICE
-* Cleanup serde-serialize quand possible
-
+# Stream 24
 ## Plan
 * Display du message dans la chatbox
 * Présentation du prochain projet
+
+## Réalisation
+* Gestion des dates:
+    * [Datetime](https://docs.rs/chrono/0.4.0/chrono/struct.DateTime.html) => Ne marche pas en wasm
+    * [Js_sys](https://docs.rs/js-sys/0.3.47/js_sys/struct.Date.html)
+* Vecteurs:
+    * Merge => extends / append
+    * Sort => sort_by
+* [Utiliser des Closures Rust en JS](https://rustwasm.github.io/docs/wasm-bindgen/reference/passing-rust-closures-to-js.html)
+* [Rust Nightly](https://doc.rust-lang.org/nightly/edition-guide/rust-2018/rustup-for-managing-rust-versions.html) => Finalement pas utile car pas de closures Rust/Js
+* [Agent Yew](https://github.com/yewstack/yew/blob/master/examples/pub_sub/README.md)
+
+# Ce qu'il reste
+* Annoter les étapes ICE
+* Cleanup serde-serialize quand possible
+* Extraire le code de l'agent dans des fichiers séparés
+* Global cleanup (exceptions, handlers via des variables ?, clippy)
+
+:heart:

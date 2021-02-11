@@ -46,6 +46,7 @@ body {
 .conversation-container {
     border: var(--border-conversation-container);
     height: var(--height-conversation-container);
+    overflow-y: auto;
     background-color: var(--background-conversation-container);
     border-radius: 4px;
     margin-bottom: var(--margin-bottom-conversation-container);

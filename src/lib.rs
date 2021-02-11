@@ -5,8 +5,9 @@ mod utils;
 mod web_rtc;
 
 use std::{cell::RefCell, rc::Rc};
-use web_rtc::WebRTC;
-use yew::prelude::*;
+use web_rtc::{EventBus, WebRTC};
+use yew::agent::Bridged;
+use yew::{html, Bridge, Component, ComponentLink, Html, ShouldRender};
 
 use components::chat_message::{ChatMessage, SenderType};
 use utils::participants::Participants;
@@ -15,11 +16,13 @@ pub struct App {
     link: ComponentLink<Self>,
     chat_messages: Vec<ChatMessage>,
     web_rtc: Rc<RefCell<WebRTC>>,
+    _producer: Box<dyn Bridge<EventBus>>,
 }
 
 pub enum ActionMessage {
-    OnReceive(String),
+    OnSend(String),
     OnConnect(Participants),
+    OnReceive(ChatMessage),
 }
 
 impl Component for App {
@@ -29,19 +32,24 @@ impl Component for App {
     // https://doc.rust-lang.org/rust-by-example/trait.html
     fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
         let web_rtc_manager = Rc::new(RefCell::new(web_rtc::WebRTC::new()));
+        let cloned_link = link.clone();
         Self {
             link,
             chat_messages: vec![],
             web_rtc: web_rtc_manager,
+            _producer: EventBus::bridge(cloned_link.callback(ActionMessage::OnReceive)),
         }
     }
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
-            ActionMessage::OnReceive(value) => {
-                let received_message = ChatMessage::new(SenderType::ME, value.clone());
-                self.chat_messages.push(received_message);
+            ActionMessage::OnSend(value) => {
+                let sent_message = ChatMessage::new(SenderType::ME, value.clone());
+                self.chat_messages.push(sent_message);
                 web_rtc::WebRTC::send_message(self.web_rtc.clone(), &value);
+            }
+            ActionMessage::OnReceive(value) => {
+                self.chat_messages.push(value);
             }
             ActionMessage::OnConnect(from_to) => {
                 web_rtc::WebRTC::connect(self.web_rtc.clone(), from_to)
@@ -67,7 +75,7 @@ impl Component for App {
                         <section class="conversation-container">
                             { self.chat_messages.iter().map(|message| message.view()).collect::<Html>() }
                         </section>
-                        <components::chatbox::ChatBox on_send=self.link.callback(|message: String| ActionMessage::OnReceive(message))>
+                        <components::chatbox::ChatBox on_send=self.link.callback(|message: String| ActionMessage::OnSend(message))>
                         </components::chatbox::ChatBox>
                     </section>
                 </section>

@@ -1,7 +1,10 @@
-use std::fmt::{Display, Formatter, Result};
+use std::fmt::{Display, Debug, Formatter, Result};
+use js_sys::Date;
 use yew::prelude::*;
 
-#[derive(Clone)]
+use serde::{Deserialize, Serialize};
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum SenderType {
     ME,
     YOU,
@@ -16,15 +19,16 @@ impl Display for SenderType {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ChatMessage {
     from: SenderType,
     content: String,
+    pub timestamp: f64,
 }
 
 impl ChatMessage {
     pub fn new(from: SenderType, content: String) -> Self {
-        Self { from, content }
+        Self { from, content, timestamp: Date:: now() }
     }
 
     pub fn view(&self) -> Html {

@@ -1,5 +1,6 @@
 use js_sys::Array;
-use std::{cell::RefCell, convert::TryFrom};
+use yew::{agent::{Dispatched ,Dispatcher}, worker::*};
+use std::{cell::RefCell, collections::HashSet, convert::TryFrom};
 use std::{rc::Rc, vec};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -9,14 +10,58 @@ use web_sys::{
     RtcSessionDescription, RtcSessionDescriptionInit, RtcSignalingState, WebSocket,
 };
 
-use crate::utils::{
+use serde::{Deserialize, Serialize};
+use crate::{components::chat_message::{ChatMessage, SenderType}, utils::{
     participants::Participants,
     socket::{Candidate, Room, SDPMessage, SignalingMessage, SocketMessage},
-};
+}};
 
 type BoxDynJsValue = Box<dyn FnMut(JsValue)>;
 type BoxDynMessageEvent = Box<dyn FnMut(MessageEvent)>;
 type BoxDynEvent<T> = Box<dyn FnMut(T)>;
+
+pub struct EventBus {
+    link: AgentLink<EventBus>,
+    subscribers: HashSet<HandlerId>,
+}
+#[derive(Serialize, Deserialize, Debug)]
+pub enum Request {
+    EventBusMsg(ChatMessage),
+}
+
+impl Agent for EventBus {
+    type Reach = Context;
+    type Message = ();
+    type Input = Request;
+    type Output = ChatMessage;
+
+    fn create(link: AgentLink<Self>) -> Self {
+        Self {
+            link,
+            subscribers: HashSet::new(),
+        }
+    }
+
+    fn update(&mut self, _msg: Self::Message) {}
+
+    fn handle_input(&mut self, msg: Self::Input, _id: HandlerId) {
+        match msg {
+            Request::EventBusMsg(s) => {
+                for sub in self.subscribers.iter() {
+                    self.link.respond(*sub, s.clone());
+                }
+            }
+        }
+    }
+
+    fn connected(&mut self, id: HandlerId) {
+        self.subscribers.insert(id);
+    }
+
+    fn disconnected(&mut self, id: HandlerId) {
+        self.subscribers.remove(&id);
+    }
+}
 
 pub struct WebRTC {
     // https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.RtcPeerConnection.html
@@ -27,6 +72,7 @@ pub struct WebRTC {
     candidates_buffer: Vec<RtcIceCandidateInit>,
     data_channel: Option<RtcDataChannel>,
     socket: WebSocket,
+    event_bus: Dispatcher<EventBus>
 }
 
 impl WebRTC {
@@ -62,6 +108,7 @@ impl WebRTC {
             signaling_channel_opened: false,
             data_channel: None,
             socket,
+            event_bus: EventBus::dispatcher(),
         }
     }
 
@@ -283,11 +330,14 @@ impl WebRTC {
                     &data_channel_init,
                 );
 
+            let cloned_on_message = cloned_web_rtc.clone();
             let on_message_data_channel_callback =
                 Closure::wrap(Box::new(move |ev: MessageEvent| {
+                    let mut on_message_borrowed = cloned_on_message.borrow_mut();
                     // TODO: Display this message as a YOU on the UI.
                     if let Some(message) = ev.data().as_string() {
-                        log::warn!("Received message {:?}", message);
+                        // on_message_borrowed.messages.push(ChatMessage::new(SenderType::YOU, message));
+                        on_message_borrowed.event_bus.send(Request::EventBusMsg(ChatMessage::new(SenderType::YOU, message)));
                     } else {
                         log::warn!("Received message error");
                     }
