@@ -368,9 +368,11 @@ RAS
 * Extraire le code de l'agent dans des fichiers séparés
 * Utiliser l'agent pour envoyer les messages au lieu des properties (petit warn a cause de https://github.com/yewstack/yew/issues/870)
 * `$ cargo clippy` est content
+* Fonctions pour get les callbacks
 
 # Ce qu'il reste
-* Cleanup serde-serialize quand possible
-* Global cleanup (exceptions, handlers via des variables ?)
+* La serialization des enums est toujours un mystère 
+* Gestion des erreurs / exceptions
+* Notification connexion WebRTC OK
 
 :heart:

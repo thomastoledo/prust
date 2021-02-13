@@ -47,7 +47,7 @@ impl Component for App {
         match msg {
             ActionMessage::HandleMessage(chat_message) => {
                 if let SenderType::ME = chat_message.from {
-                    web_rtc::WebRTC::send_message(self.web_rtc.clone(), &chat_message.content);
+                    web_rtc::WebRTC::send_webrtc_message(self.web_rtc.clone(), &chat_message.content);
                 }
                 self.chat_messages.push(chat_message);
             }
