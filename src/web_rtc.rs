@@ -1,67 +1,25 @@
-use js_sys::Array;
-use yew::{agent::{Dispatched ,Dispatcher}, worker::*};
-use std::{cell::RefCell, collections::HashSet, convert::TryFrom};
+use std::{cell::RefCell, convert::TryFrom};
 use std::{rc::Rc, vec};
-use wasm_bindgen::prelude::*;
+
+use js_sys::Array;
 use wasm_bindgen::JsCast;
+use wasm_bindgen::prelude::*;
 use web_sys::{
     MessageEvent, RtcConfiguration, RtcDataChannel, RtcDataChannelInit, RtcDataChannelState,
     RtcIceCandidateInit, RtcIceServer, RtcPeerConnection, RtcPeerConnectionIceEvent, RtcSdpType,
     RtcSessionDescription, RtcSessionDescriptionInit, RtcSignalingState, WebSocket,
 };
+use yew::agent::{Dispatched, Dispatcher};
 
-use serde::{Deserialize, Serialize};
 use crate::{components::chat_message::{ChatMessage, SenderType}, utils::{
     participants::Participants,
     socket::{Candidate, Room, SDPMessage, SignalingMessage, SocketMessage},
 }};
+use crate::event_bus::{EventBus, Request};
 
 type BoxDynJsValue = Box<dyn FnMut(JsValue)>;
 type BoxDynMessageEvent = Box<dyn FnMut(MessageEvent)>;
 type BoxDynEvent<T> = Box<dyn FnMut(T)>;
-
-pub struct EventBus {
-    link: AgentLink<EventBus>,
-    subscribers: HashSet<HandlerId>,
-}
-#[derive(Serialize, Deserialize, Debug)]
-pub enum Request {
-    EventBusMsg(ChatMessage),
-}
-
-impl Agent for EventBus {
-    type Reach = Context;
-    type Message = ();
-    type Input = Request;
-    type Output = ChatMessage;
-
-    fn create(link: AgentLink<Self>) -> Self {
-        Self {
-            link,
-            subscribers: HashSet::new(),
-        }
-    }
-
-    fn update(&mut self, _msg: Self::Message) {}
-
-    fn handle_input(&mut self, msg: Self::Input, _id: HandlerId) {
-        match msg {
-            Request::EventBusMsg(s) => {
-                for sub in self.subscribers.iter() {
-                    self.link.respond(*sub, s.clone());
-                }
-            }
-        }
-    }
-
-    fn connected(&mut self, id: HandlerId) {
-        self.subscribers.insert(id);
-    }
-
-    fn disconnected(&mut self, id: HandlerId) {
-        self.subscribers.remove(&id);
-    }
-}
 
 pub struct WebRTC {
     // https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.RtcPeerConnection.html
@@ -72,7 +30,7 @@ pub struct WebRTC {
     candidates_buffer: Vec<RtcIceCandidateInit>,
     data_channel: Option<RtcDataChannel>,
     socket: WebSocket,
-    event_bus: Dispatcher<EventBus>
+    event_bus: Dispatcher<EventBus>,
 }
 
 impl WebRTC {
@@ -139,7 +97,7 @@ impl WebRTC {
         let on_ice_cloned = web_rtc.clone();
         let on_ice_candidate_callback =
             Closure::wrap(Box::new(move |event: RtcPeerConnectionIceEvent| {
-                log::info!("ICE 1: Send ice_candidate to signaling server");
+                log::info!("ICE: Send ice_candidate to signaling server");
                 if let Some(candidate) = event.candidate() {
                     if !candidate.candidate().is_empty() {
                         let signal_message_from_client = SocketMessage::SignalMessageFromClient {
@@ -181,7 +139,7 @@ impl WebRTC {
 
         let sdp_clone = web_rtc.clone();
         let send_sdp_callback = Closure::wrap(Box::new(move |_: JsValue| {
-            log::info!("Step 3: On negociation needed, send offer to signaling server");
+            log::info!("Step 3: On negotiation needed, send offer to signaling server");
             let session_description = sdp_clone
                 .as_ref()
                 .borrow()
@@ -205,11 +163,11 @@ impl WebRTC {
             };
         }) as BoxDynEvent<JsValue>);
 
-        let on_negociation_success_clone = web_rtc.clone();
-        let negociation_success_callback = Closure::wrap(Box::new(move |descriptor: JsValue| {
-            log::info!("Step 2: On negociation needed, set_local_description");
+        let on_negotiation_success_clone = web_rtc.clone();
+        let negotiation_success_callback = Closure::wrap(Box::new(move |descriptor: JsValue| {
+            log::info!("Step 2: On negotiation needed, set_local_description");
             let description_init = RtcSessionDescriptionInit::try_from(descriptor).unwrap();
-            let _ = on_negociation_success_clone
+            let _ = on_negotiation_success_clone
                 .as_ref()
                 .borrow()
                 .connection
@@ -217,11 +175,11 @@ impl WebRTC {
                 .then(&send_sdp_callback);
         }) as BoxDynEvent<JsValue>);
 
-        let on_negociation_needed_clone = web_rtc.clone();
-        let on_negociation_needed_callback = Closure::wrap(Box::new(move |_: JsValue| {
-            let mut borrow_mut = on_negociation_needed_clone.as_ref().borrow_mut();
+        let on_negotiation_needed_clone = web_rtc.clone();
+        let on_negotiation_needed_callback = Closure::wrap(Box::new(move |_: JsValue| {
+            let mut borrow_mut = on_negotiation_needed_clone.as_ref().borrow_mut();
             if !borrow_mut.is_negotiating {
-                log::info!("Step 1: On negociation needed, create offer");
+                log::info!("Step 1: On negotiation needed, create offer");
                 borrow_mut.set_is_negotiating(true);
 
                 let print_error_callback =
@@ -229,7 +187,7 @@ impl WebRTC {
                 let _ = borrow_mut
                     .connection
                     .create_offer()
-                    .then(&negociation_success_callback)
+                    .then(&negotiation_success_callback)
                     .catch(&print_error_callback);
             }
         }) as BoxDynJsValue);
@@ -254,9 +212,9 @@ impl WebRTC {
                 .borrow()
                 .connection
                 .set_onnegotiationneeded(Some(
-                    on_negociation_needed_callback.as_ref().unchecked_ref(),
+                    on_negotiation_needed_callback.as_ref().unchecked_ref(),
                 ));
-            on_negociation_needed_callback.forget();
+            on_negotiation_needed_callback.forget();
 
             // Send message in socket
             let new_user_message = SocketMessage::NewUser {
@@ -352,6 +310,7 @@ impl WebRTC {
     }
 
     fn handle_ice_candidate(web_rtc: Rc<RefCell<WebRTC>>, candidate: Candidate) {
+        log::info!("ICE: Receive ice_candidate from signaling server");
         let cloned_web_rtc = web_rtc.clone();
 
         let mut borrowed = cloned_web_rtc.as_ref().borrow_mut();
@@ -394,7 +353,7 @@ impl WebRTC {
                     message: SDPMessage::try_from(
                         borrow_mut.connection.local_description().unwrap(),
                     )
-                    .unwrap(),
+                        .unwrap(),
                 },
             };
             let message_to_send = serde_json::to_string(&message_to_send).unwrap();

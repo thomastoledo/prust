@@ -363,10 +363,13 @@ RAS
 * [Rust Nightly](https://doc.rust-lang.org/nightly/edition-guide/rust-2018/rustup-for-managing-rust-versions.html) => Finalement pas utile car pas de closures Rust/Js
 * [Agent Yew](https://github.com/yewstack/yew/blob/master/examples/pub_sub/README.md)
 
-# Ce qu'il reste
+# Off stream
 * Annoter les étapes ICE
-* Cleanup serde-serialize quand possible
 * Extraire le code de l'agent dans des fichiers séparés
+* Utiliser l'agent pour envoyer les messages au lieu des properties (petit warn a cause de https://github.com/yewstack/yew/issues/870)
+
+# Ce qu'il reste
+* Cleanup serde-serialize quand possible
 * Global cleanup (exceptions, handlers via des variables ?, clippy)
 
 :heart:

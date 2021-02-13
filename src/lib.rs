@@ -1,16 +1,19 @@
 #![recursion_limit = "1024"]
 
+use std::{cell::RefCell, rc::Rc};
+
+use yew::{Bridge, Component, ComponentLink, html, Html, ShouldRender};
+use yew::agent::Bridged;
+
+use components::chat_message::{ChatMessage, SenderType};
+use event_bus::EventBus;
+use utils::participants::Participants;
+use web_rtc::WebRTC;
+
 mod components;
 mod utils;
 mod web_rtc;
-
-use std::{cell::RefCell, rc::Rc};
-use web_rtc::{EventBus, WebRTC};
-use yew::agent::Bridged;
-use yew::{html, Bridge, Component, ComponentLink, Html, ShouldRender};
-
-use components::chat_message::{ChatMessage, SenderType};
-use utils::participants::Participants;
+mod event_bus;
 
 pub struct App {
     link: ComponentLink<Self>,
@@ -20,9 +23,8 @@ pub struct App {
 }
 
 pub enum ActionMessage {
-    OnSend(String),
     OnConnect(Participants),
-    OnReceive(ChatMessage),
+    HandleMessage(ChatMessage),
 }
 
 impl Component for App {
@@ -37,19 +39,17 @@ impl Component for App {
             link,
             chat_messages: vec![],
             web_rtc: web_rtc_manager,
-            _producer: EventBus::bridge(cloned_link.callback(ActionMessage::OnReceive)),
+            _producer: EventBus::bridge(cloned_link.callback(ActionMessage::HandleMessage)),
         }
     }
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
-            ActionMessage::OnSend(value) => {
-                let sent_message = ChatMessage::new(SenderType::ME, value.clone());
-                self.chat_messages.push(sent_message);
-                web_rtc::WebRTC::send_message(self.web_rtc.clone(), &value);
-            }
-            ActionMessage::OnReceive(value) => {
-                self.chat_messages.push(value);
+            ActionMessage::HandleMessage(chat_message) => {
+                if let SenderType::ME = chat_message.from {
+                    web_rtc::WebRTC::send_message(self.web_rtc.clone(), &chat_message.content);
+                }
+                self.chat_messages.push(chat_message);
             }
             ActionMessage::OnConnect(from_to) => {
                 web_rtc::WebRTC::connect(self.web_rtc.clone(), from_to)
@@ -75,8 +75,7 @@ impl Component for App {
                         <section class="conversation-container">
                             { self.chat_messages.iter().map(|message| message.view()).collect::<Html>() }
                         </section>
-                        <components::chatbox::ChatBox on_send=self.link.callback(|message: String| ActionMessage::OnSend(message))>
-                        </components::chatbox::ChatBox>
+                        <components::chatbox::ChatBox/>
                     </section>
                 </section>
             </>

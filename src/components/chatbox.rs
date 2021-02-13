@@ -1,26 +1,24 @@
 use web_sys::HtmlInputElement;
 use web_sys::KeyboardEvent;
+use yew::agent::{Dispatched, Dispatcher};
 use yew::prelude::*;
-use yew::Callback;
+
+use crate::components::chat_message::{ChatMessage, SenderType};
+use crate::event_bus::{EventBus, Request};
 
 pub struct ChatBox {
     link: ComponentLink<Self>,
     node_ref: NodeRef,
-    props: ChatBoxProps,
+    event_bus: Dispatcher<EventBus>,
 }
 
 impl ChatBox {
-    fn send_message(&self) {
+    fn send_message(&mut self) {
         if let Some(input) = self.node_ref.cast::<HtmlInputElement>() {
-            self.props.on_send.emit(input.value());
+            self.event_bus.send(Request::EventBusMsg(ChatMessage::new(SenderType::ME, input.value())));
             input.set_value("");
         }
     }
-}
-
-#[derive(Properties, Clone)]
-pub struct ChatBoxProps {
-    pub on_send: Callback<String>,
 }
 
 pub enum Msg {
@@ -30,13 +28,13 @@ pub enum Msg {
 
 impl Component for ChatBox {
     type Message = Msg;
-    type Properties = ChatBoxProps;
+    type Properties = ();
 
-    fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
+    fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
         Self {
             link,
             node_ref: NodeRef::default(),
-            props,
+            event_bus: EventBus::dispatcher(),
         }
     }
 
