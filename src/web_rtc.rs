@@ -83,16 +83,12 @@ impl WebRTC {
                 Err(error) => log::error!("Oh No: {:?}", error),
             };
         }) as BoxDynMessageEvent);
-        {
-            // To avoid multiple borrow in the same time we borrow in this limited scope
-            web_rtc
-                .clone()
-                .as_ref()
-                .borrow()
-                .socket
-                .set_onmessage(Some(on_message_callback.as_ref().unchecked_ref()));
-            on_message_callback.forget();
-        }
+        web_rtc
+            .as_ref()
+            .borrow()
+            .socket
+            .set_onmessage(Some(on_message_callback.as_ref().unchecked_ref()));
+        on_message_callback.forget();
 
         let on_ice_cloned = web_rtc.clone();
         let on_ice_candidate_callback =
@@ -191,45 +187,41 @@ impl WebRTC {
                     .catch(&print_error_callback);
             }
         }) as BoxDynJsValue);
-        {
-            // Creates a scope to avoid multiple borrow mut.
-            web_rtc
-                .as_ref()
-                .borrow()
-                .connection
-                .set_onicecandidate(Some(on_ice_candidate_callback.as_ref().unchecked_ref()));
-            on_ice_candidate_callback.forget();
+        // Creates a scope to avoid multiple borrow mut.
+        web_rtc
+            .as_ref()
+            .borrow()
+            .connection
+            .set_onicecandidate(Some(on_ice_candidate_callback.as_ref().unchecked_ref()));
+        on_ice_candidate_callback.forget();
 
-            web_rtc
-                .as_ref()
-                .borrow()
-                .connection
-                .set_onsignalingstatechange(Some(on_signaling_callback.as_ref().unchecked_ref()));
-            on_signaling_callback.forget();
+        web_rtc
+            .as_ref()
+            .borrow()
+            .connection
+            .set_onsignalingstatechange(Some(on_signaling_callback.as_ref().unchecked_ref()));
+        on_signaling_callback.forget();
 
-            web_rtc
-                .as_ref()
-                .borrow()
-                .connection
-                .set_onnegotiationneeded(Some(
-                    on_negotiation_needed_callback.as_ref().unchecked_ref(),
-                ));
-            on_negotiation_needed_callback.forget();
+        web_rtc
+            .as_ref()
+            .borrow()
+            .connection
+            .set_onnegotiationneeded(Some(
+                on_negotiation_needed_callback.as_ref().unchecked_ref(),
+            ));
+        on_negotiation_needed_callback.forget();
 
-            // Send message in socket
-            let new_user_message = SocketMessage::NewUser {
-                content: participants.clone(),
-            };
-            let json_new_user_message = serde_json::to_string(&new_user_message).unwrap();
-            let send_res = web_rtc
-                .as_ref()
-                .borrow()
-                .socket
-                .send_with_str(json_new_user_message.as_ref());
-            match send_res {
-                Ok(_) => (),
-                Err(ex) => log::error!("Could not connect to websocket {:?}", ex),
-            }
+        // Send message in socket
+        let new_user_message = SocketMessage::NewUser { content: participants };
+        let json_new_user_message = serde_json::to_string(&new_user_message).unwrap();
+        let send_res = web_rtc
+            .as_ref()
+            .borrow()
+            .socket
+            .send_with_str(json_new_user_message.as_ref());
+        match send_res {
+            Ok(_) => (),
+            Err(ex) => log::error!("Could not connect to websocket {:?}", ex),
         }
     }
 
@@ -270,12 +262,11 @@ impl WebRTC {
     }
 
     fn join_room(web_rtc: Rc<RefCell<WebRTC>>, content: Room) {
-        (*web_rtc.as_ref().borrow_mut()).room = Some(content.room.clone());
+        (*web_rtc.as_ref().borrow_mut()).room = Some(content.room);
     }
 
     fn handle_user_here(web_rtc: Rc<RefCell<WebRTC>>, signaling_id: u16) {
-        let cloned_web_rtc = web_rtc.clone();
-        let mut borrow_mut = cloned_web_rtc.as_ref().borrow_mut();
+        let mut borrow_mut = web_rtc.as_ref().borrow_mut();
         if !borrow_mut.signaling_channel_opened {
             let current_room = &borrow_mut.room;
             let mut data_channel_init = RtcDataChannelInit::new();
@@ -288,13 +279,11 @@ impl WebRTC {
                     &data_channel_init,
                 );
 
-            let cloned_on_message = cloned_web_rtc.clone();
+            let cloned_on_message = web_rtc.clone();
             let on_message_data_channel_callback =
                 Closure::wrap(Box::new(move |ev: MessageEvent| {
                     let mut on_message_borrowed = cloned_on_message.borrow_mut();
-                    // TODO: Display this message as a YOU on the UI.
                     if let Some(message) = ev.data().as_string() {
-                        // on_message_borrowed.messages.push(ChatMessage::new(SenderType::YOU, message));
                         on_message_borrowed.event_bus.send(Request::EventBusMsg(ChatMessage::new(SenderType::YOU, message)));
                     } else {
                         log::warn!("Received message error");
@@ -311,9 +300,8 @@ impl WebRTC {
 
     fn handle_ice_candidate(web_rtc: Rc<RefCell<WebRTC>>, candidate: Candidate) {
         log::info!("ICE: Receive ice_candidate from signaling server");
-        let cloned_web_rtc = web_rtc.clone();
 
-        let mut borrowed = cloned_web_rtc.as_ref().borrow_mut();
+        let mut borrowed = web_rtc.as_ref().borrow_mut();
         let remote_description: Option<RtcSessionDescription> =
             borrowed.connection.remote_description();
 
@@ -410,8 +398,7 @@ impl WebRTC {
         }) as BoxDynEvent<JsValue>);
 
         log::info!("Step 4: Handle SDP, set_remote_description");
-        let clone_2 = web_rtc.clone();
-        let _ = clone_2
+        let _ = web_rtc
             .as_ref()
             .borrow()
             .connection

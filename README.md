@@ -367,9 +367,10 @@ RAS
 * Annoter les étapes ICE
 * Extraire le code de l'agent dans des fichiers séparés
 * Utiliser l'agent pour envoyer les messages au lieu des properties (petit warn a cause de https://github.com/yewstack/yew/issues/870)
+* `$ cargo clippy` est content
 
 # Ce qu'il reste
 * Cleanup serde-serialize quand possible
-* Global cleanup (exceptions, handlers via des variables ?, clippy)
+* Global cleanup (exceptions, handlers via des variables ?)
 
 :heart:

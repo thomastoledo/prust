@@ -51,14 +51,14 @@ impl TryFrom<RtcSessionDescription> for SDPMessage {
             RtcSdpType::Pranswer => "pranswer",
             RtcSdpType::Rollback => "rollback",
             _ => {
-                return Result::Err(CustomError::InputTypeError(String::from(
-                    "Unknown SDP type",
-                )))
+                return Result::Err(CustomError::InputTypeError(
+                    String::from("Unknown SDP type")
+                ));
             }
         };
         Ok(SDPMessage {
-            type_: String::from(type_),
-            sdp: String::from(value.sdp()),
+            type_: type_.to_string(),
+            sdp: value.sdp(),
         })
     }
 }
